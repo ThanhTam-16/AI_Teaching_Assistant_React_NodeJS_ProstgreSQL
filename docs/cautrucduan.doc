@@ -1,0 +1,371 @@
+backend/
+│
+├── prisma/
+│   ├── schema.prisma
+│   ├── seed.js
+│   └── migrations/
+│
+├── src/
+│   │
+│   ├── config/
+│   │   ├── database.js
+│   │   ├── env.js
+│   │   └── ai.config.js
+│   │
+│   ├── models/
+│   │   ├── user.model.js
+│   │   ├── class.model.js
+│   │   ├── subject.model.js
+│   │   ├── clo.model.js
+│   │   ├── lesson.model.js
+│   │   ├── assignment.model.js
+│   │   ├── submission.model.js
+│   │   ├── grade.model.js
+│   │   ├── feedback.model.js
+│   │   ├── notification.model.js
+│   │   └── aiGeneration.model.js
+│   │
+│   ├── controllers/
+│   │   ├── auth.controller.js
+│   │   ├── user.controller.js
+│   │   ├── class.controller.js
+│   │   ├── subject.controller.js
+│   │   ├── clo.controller.js
+│   │   ├── lesson.controller.js
+│   │   ├── assignment.controller.js
+│   │   ├── submission.controller.js
+│   │   ├── grade.controller.js
+│   │   ├── feedback.controller.js
+│   │   ├── notification.controller.js
+│   │   ├── dashboard.controller.js
+│   │   └── ai.controller.js
+│   │
+│   ├── services/
+│   │   ├── auth.service.js
+│   │   ├── user.service.js
+│   │   ├── class.service.js
+│   │   ├── subject.service.js
+│   │   ├── clo.service.js
+│   │   ├── lesson.service.js
+│   │   ├── assignment.service.js
+│   │   ├── submission.service.js
+│   │   ├── grade.service.js
+│   │   ├── feedback.service.js
+│   │   ├── notification.service.js
+│   │   ├── dashboard.service.js
+│   │   └── ai.service.js
+│   │
+│   ├── routes/
+│   │   ├── index.js
+│   │   ├── auth.routes.js
+│   │   ├── user.routes.js
+│   │   ├── class.routes.js
+│   │   ├── subject.routes.js
+│   │   ├── clo.routes.js
+│   │   ├── lesson.routes.js
+│   │   ├── assignment.routes.js
+│   │   ├── submission.routes.js
+│   │   ├── grade.routes.js
+│   │   ├── feedback.routes.js
+│   │   ├── notification.routes.js
+│   │   ├── dashboard.routes.js
+│   │   └── ai.routes.js
+│   │
+│   ├── middlewares/
+│   │   ├── auth.middleware.js
+│   │   ├── role.middleware.js
+│   │   ├── error.middleware.js
+│   │   ├── validate.middleware.js
+│   │   └── upload.middleware.js
+│   │
+│   ├── validations/
+│   │   ├── auth.validation.js
+│   │   ├── user.validation.js
+│   │   ├── class.validation.js
+│   │   ├── subject.validation.js
+│   │   ├── clo.validation.js
+│   │   ├── lesson.validation.js
+│   │   ├── assignment.validation.js
+│   │   ├── submission.validation.js
+│   │   ├── grade.validation.js
+│   │   └── ai.validation.js
+│   │
+│   ├── utils/
+│   │   ├── jwt.js
+│   │   ├── bcrypt.js
+│   │   ├── response.js
+│   │   ├── pagination.js
+│   │   ├── fileUpload.js
+│   │   └── constants.js
+│   │
+│   ├── uploads/
+│   │   ├── avatars/
+│   │   ├── lessons/
+│   │   └── submissions/
+│   │
+│   ├── app.js
+│   └── server.js
+│
+├── .env
+├── .env.example
+├── package.json
+└── README.md
+
+prisma/       → chứa schema database thật
+models/       → định nghĩa model-level constants/helper/schema mapping
+controllers/  → nhận request, gọi service, trả response
+services/     → xử lý logic chính
+routes/       → định nghĩa API endpoint
+middlewares/  → auth, role, upload, validate, error handling
+validations/  → kiểm tra dữ liệu đầu vào
+utils/        → hàm dùng chung
+uploads/      → lưu file upload tạm thời
+
+frontend/
+│
+├── public/
+│   ├── logo.png
+│   └── favicon.ico
+│
+├── src/
+│   │
+│   ├── app/
+│   │   ├── App.jsx
+│   │   └── router.jsx
+│   │
+│   ├── assets/
+│   │   ├── images/
+│   │   └── icons/
+│   │
+│   ├── components/
+│   │   │
+│   │   ├── common/
+│   │   │   ├── Button.jsx
+│   │   │   ├── Input.jsx
+│   │   │   ├── Textarea.jsx
+│   │   │   ├── Select.jsx
+│   │   │   ├── Modal.jsx
+│   │   │   ├── Table.jsx
+│   │   │   ├── Card.jsx
+│   │   │   ├── Badge.jsx
+│   │   │   ├── Loading.jsx
+│   │   │   ├── EmptyState.jsx
+│   │   │   └── PageHeader.jsx
+│   │   │
+│   │   ├── landing/
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── HeroSection.jsx
+│   │   │   ├── ProblemSection.jsx
+│   │   │   ├── SolutionSection.jsx
+│   │   │   ├── FeatureSection.jsx
+│   │   │   ├── RoleSection.jsx
+│   │   │   ├── AISection.jsx
+│   │   │   └── Footer.jsx
+│   │   │
+│   │   └── auth/
+│   │       ├── LoginForm.jsx
+│   │       └── RegisterForm.jsx
+│   │
+│   ├── features/
+│   │   │
+│   │   ├── admin/
+│   │   │   ├── layouts/
+│   │   │   │   └── AdminLayout.jsx
+│   │   │   │
+│   │   │   ├── components/
+│   │   │   │   ├── AdminSidebar.jsx
+│   │   │   │   ├── AdminHeader.jsx
+│   │   │   │   ├── UserTable.jsx
+│   │   │   │   ├── UserForm.jsx
+│   │   │   │   ├── StatCard.jsx
+│   │   │   │   └── AISettingCard.jsx
+│   │   │   │
+│   │   │   └── pages/
+│   │   │       ├── AdminOverviewPage.jsx
+│   │   │       ├── UserManagementPage.jsx
+│   │   │       ├── LecturerManagementPage.jsx
+│   │   │       ├── StudentManagementPage.jsx
+│   │   │       ├── SubjectManagementPage.jsx
+│   │   │       ├── AISettingsPage.jsx
+│   │   │       └── SystemSettingsPage.jsx
+│   │   │
+│   │   ├── lecturer/
+│   │   │   ├── layouts/
+│   │   │   │   └── LecturerLayout.jsx
+│   │   │   │
+│   │   │   ├── components/
+│   │   │   │   ├── LecturerSidebar.jsx
+│   │   │   │   ├── LecturerHeader.jsx
+│   │   │   │   ├── ClassCard.jsx
+│   │   │   │   ├── SubjectCard.jsx
+│   │   │   │   ├── LessonForm.jsx
+│   │   │   │   ├── AssignmentForm.jsx
+│   │   │   │   ├── SubmissionTable.jsx
+│   │   │   │   └── AIResultBox.jsx
+│   │   │   │
+│   │   │   └── pages/
+│   │   │       ├── LecturerOverviewPage.jsx
+│   │   │       ├── ClassManagementPage.jsx
+│   │   │       ├── SubjectManagementPage.jsx
+│   │   │       ├── CLOManagementPage.jsx
+│   │   │       ├── LessonManagementPage.jsx
+│   │   │       ├── AssignmentManagementPage.jsx
+│   │   │       ├── SubmissionManagementPage.jsx
+│   │   │       ├── GradingPage.jsx
+│   │   │       ├── AIExerciseGeneratorPage.jsx
+│   │   │       ├── AIQuizGeneratorPage.jsx
+│   │   │       ├── AIFeedbackGeneratorPage.jsx
+│   │   │       ├── AISlideGeneratorPage.jsx
+│   │   │       └── LecturerReportPage.jsx
+│   │   │
+│   │   └── student/
+│   │       ├── layouts/
+│   │       │   └── StudentLayout.jsx
+│   │       │
+│   │       ├── components/
+│   │       │   ├── StudentSidebar.jsx
+│   │       │   ├── StudentHeader.jsx
+│   │       │   ├── AssignmentCard.jsx
+│   │       │   ├── LessonCard.jsx
+│   │       │   ├── SubjectCard.jsx
+│   │       │   ├── FeedbackCard.jsx
+│   │       │   └── ProgressCard.jsx
+│   │       │
+│   │       └── pages/
+│   │           ├── StudentOverviewPage.jsx
+│   │           ├── MyClassesPage.jsx
+│   │           ├── MySubjectsPage.jsx
+│   │           ├── LessonsPage.jsx
+│   │           ├── AssignmentsPage.jsx
+│   │           ├── SubmitAssignmentPage.jsx
+│   │           ├── FeedbackPage.jsx
+│   │           └── ProgressPage.jsx
+│   │
+│   ├── pages/
+│   │   ├── LandingPage.jsx
+│   │   ├── LoginPage.jsx
+│   │   ├── RegisterPage.jsx
+│   │   ├── ForgotPasswordPage.jsx
+│   │   ├── UnauthorizedPage.jsx
+│   │   └── NotFoundPage.jsx
+│   │
+│   ├── routes/
+│   │   ├── ProtectedRoute.jsx
+│   │   ├── RoleRoute.jsx
+│   │   ├── admin.routes.jsx
+│   │   ├── lecturer.routes.jsx
+│   │   └── student.routes.jsx
+│   │
+│   ├── services/
+│   │   ├── api.js
+│   │   ├── auth.api.js
+│   │   ├── user.api.js
+│   │   ├── class.api.js
+│   │   ├── subject.api.js
+│   │   ├── clo.api.js
+│   │   ├── lesson.api.js
+│   │   ├── assignment.api.js
+│   │   ├── submission.api.js
+│   │   ├── grade.api.js
+│   │   ├── feedback.api.js
+│   │   ├── dashboard.api.js
+│   │   └── ai.api.js
+│   │
+│   ├── contexts/
+│   │   └── AuthContext.jsx
+│   │
+│   ├── hooks/
+│   │   ├── useAuth.js
+│   │   ├── useFetch.js
+│   │   └── useRole.js
+│   │
+│   ├── utils/
+│   │   ├── constants.js
+│   │   ├── formatDate.js
+│   │   ├── formatScore.js
+│   │   ├── storage.js
+│   │   └── roleRedirect.js
+│   │
+│   ├── styles/
+│   │   └── index.css
+│   │
+│   └── main.jsx
+│
+├── .env
+├── .env.example
+├── index.html
+├── package.json
+├── tailwind.config.js
+├── postcss.config.js
+└── vite.config.js
+
+docs/
+│
+├── requirements/
+│   ├── user-requirement.md
+│   └── software-requirement-specification.md
+│
+├── design/
+│   ├── architecture-design.md
+│   ├── database-design.md
+│   ├── api-specification.md
+│   └── ui-wireframe.md
+│
+├── diagrams/
+│   ├── use-case-diagram.puml
+│   ├── activity-diagram.puml
+│   ├── sequence-login.puml
+│   ├── sequence-submit-assignment.puml
+│   └── erd.puml
+│
+├── testing/
+│   ├── test-cases.md
+│   └── bug-report.md
+│
+└── deployment/
+    ├── installation-guide.md
+    └── deployment-guide.md
+
+aita-project/
+│
+├── backend/
+│   ├── prisma/
+│   ├── src/
+│   │   ├── config/
+│   │   ├── models/
+│   │   ├── controllers/
+│   │   ├── services/
+│   │   ├── routes/
+│   │   ├── middlewares/
+│   │   ├── validations/
+│   │   ├── utils/
+│   │   ├── uploads/
+│   │   ├── app.js
+│   │   └── server.js
+│   ├── .env
+│   └── package.json
+│
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── app/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── features/
+│   │   │   ├── admin/
+│   │   │   ├── lecturer/
+│   │   │   └── student/
+│   │   ├── pages/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── contexts/
+│   │   ├── hooks/
+│   │   ├── utils/
+│   │   ├── styles/
+│   │   └── main.jsx
+│   └── package.json
+│
+├── docs/
+├── .gitignore
+├── README.md
+└── package.json
