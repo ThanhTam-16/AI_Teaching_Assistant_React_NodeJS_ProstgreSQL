@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react'
-import Navbar from './components/Navbar'
-import Hero from './components/Hero'
-import Overview from './components/Overview'
-import Features from './components/Features'
-import TechStack from './components/TechStack'
-import Audience from './components/Audience'
-import Contact from './components/Contact'
-import Footer from './components/Footer'
+import Navbar from './components/landing/Navbar'
+import Hero from './components/landing/Hero'
+import Overview from './components/landing/Overview'
+import Features from './components/landing/Features'
+import TechStack from './components/landing/TechStack'
+import Audience from './components/landing/Audience'
+import Contact from './components/landing/Contact'
+import Footer from './components/landing/Footer'
 
 export default function App() {
   // Global scroll-reveal observer
