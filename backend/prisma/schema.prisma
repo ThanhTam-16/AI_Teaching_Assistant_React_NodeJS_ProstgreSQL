@@ -1,13 +1,604 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  LECTURER
+  STUDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum ClassStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum AssignmentStatus {
+  DRAFT
+  ASSIGNED
+  CLOSED
+}
+
+enum SubmissionType {
+  TEXT
+  FILE
+  CODE
+  LINK
+}
+
+enum SubmissionStatus {
+  NOT_SUBMITTED
+  SUBMITTED
+  LATE
+  GRADED
+  NEED_REVIEW
+}
+
+enum FeedbackSource {
+  MANUAL
+  AI
+}
+
+enum AIGenerationType {
+  LESSON_OUTLINE
+  EXERCISE
+  QUIZ
+  FEEDBACK
+  SLIDE_OUTLINE
+  CODE_REVIEW
+}
+
+enum AIGenerationStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
+enum NotificationType {
+  SYSTEM
+  ASSIGNMENT
+  SUBMISSION
+  FEEDBACK
+  GRADE
+}
+
+enum AIFeatureStatus {
+  ACTIVE
+  COMING_SOON
+  DISABLED
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+}
+
+/*
+  =========================
+  USER
+  =========================
+*/
+
+model User {
+  id        String     @id @default(uuid())
+  fullName  String
+  email     String     @unique
+  password  String
+  role      Role
+  phone     String?
+  avatarUrl String?
+  status    UserStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lecturerClasses Class[] @relation("ClassLecturer")
+
+  enrollments ClassEnrollment[]
+
+  lecturerSubjects LecturerSubject[]
+
+  createdSubjects Subject[] @relation("SubjectCreator")
+
+  createdLessons Lesson[] @relation("LessonCreator")
+
+  createdAssignments Assignment[] @relation("AssignmentCreator")
+
+  createdQuizzes Quiz[] @relation("QuizCreator")
+
+  studentSubmissions Submission[] @relation("StudentSubmissions")
+
+  gradesGiven Grade[] @relation("GradeLecturer")
+
+  feedbacksGiven Feedback[] @relation("FeedbackLecturer")
+
+  aiGenerations AIGeneration[]
+
+  notifications Notification[] @relation("NotificationUser")
+
+  @@map("users")
+}
+
+/*
+  =========================
+  CLASS
+  =========================
+*/
+
+model Class {
+  id          String      @id @default(uuid())
+  name        String
+  code        String      @unique
+  semester    String?
+  description String?
+  status      ClassStatus @default(ACTIVE)
+
+  lecturerId String?
+  lecturer   User? @relation("ClassLecturer", fields: [lecturerId], references: [id])
+
+  enrollments ClassEnrollment[]
+
+  classSubjects ClassSubject[]
+
+  assignments Assignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("classes")
+}
+
+/*
+  =========================
+  SUBJECT
+  =========================
+*/
+
+model Subject {
+  id          String  @id @default(uuid())
+  code        String  @unique
+  name        String
+  description String?
+  credits     Int     @default(3)
+
+  createdById String?
+  createdBy   User? @relation("SubjectCreator", fields: [createdById], references: [id])
+
+  lecturerSubjects LecturerSubject[]
+
+  classSubjects ClassSubject[]
+
+  clos CLO[]
+
+  lessons Lesson[]
+
+  assignments Assignment[]
+
+  quizzes Quiz[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("subjects")
+}
+
+/*
+  =========================
+  CLASS ENROLLMENT
+  Sinh viên thuộc lớp nào
+  =========================
+*/
+
+model ClassEnrollment {
+  id String @id @default(uuid())
+
+  classId String
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  enrolledAt DateTime @default(now())
+
+  @@unique([classId, studentId])
+  @@map("class_enrollments")
+}
+
+/*
+  =========================
+  LECTURER SUBJECT
+  Giảng viên được gán môn nào
+  =========================
+*/
+
+model LecturerSubject {
+  id String @id @default(uuid())
+
+  lecturerId String
+  lecturer   User @relation(fields: [lecturerId], references: [id], onDelete: Cascade)
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+
+  @@unique([lecturerId, subjectId])
+  @@map("lecturer_subjects")
+}
+
+/*
+  =========================
+  CLASS SUBJECT
+  Lớp học môn nào
+  =========================
+*/
+
+model ClassSubject {
+  id String @id @default(uuid())
+
+  classId String
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+
+  @@unique([classId, subjectId])
+  @@map("class_subjects")
+}
+
+/*
+  =========================
+  CLO
+  =========================
+*/
+
+model CLO {
+  id          String @id @default(uuid())
+  code        String
+  description String
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  lessons Lesson[]
+
+  assignments Assignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([subjectId, code])
+  @@map("clos")
+}
+
+/*
+  =========================
+  LESSON
+  =========================
+*/
+
+model Lesson {
+  id          String        @id @default(uuid())
+  title       String
+  chapter     String?
+  description String?
+  content     String?
+  status      ContentStatus @default(DRAFT)
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  cloId String?
+  clo   CLO? @relation(fields: [cloId], references: [id])
+
+  createdById String?
+  createdBy   User? @relation("LessonCreator", fields: [createdById], references: [id])
+
+  materials LessonMaterial[]
+
+  assignments Assignment[]
+
+  quizzes Quiz[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("lessons")
+}
+
+/*
+  =========================
+  LESSON MATERIAL
+  File tài liệu bài học
+  =========================
+*/
+
+model LessonMaterial {
+  id       String @id @default(uuid())
+  fileName String
+  fileUrl  String
+  fileType String?
+
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  uploadedAt DateTime @default(now())
+
+  @@map("lesson_materials")
+}
+
+/*
+  =========================
+  ASSIGNMENT
+  =========================
+*/
+
+model Assignment {
+  id             String           @id @default(uuid())
+  title          String
+  description    String?
+  requirements   String?
+  dueDate        DateTime?
+  totalScore     Float            @default(10)
+  difficulty     Difficulty       @default(MEDIUM)
+  submissionType SubmissionType   @default(TEXT)
+  status         AssignmentStatus @default(DRAFT)
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  classId String
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  lessonId String?
+  lesson   Lesson? @relation(fields: [lessonId], references: [id])
+
+  cloId String?
+  clo   CLO? @relation(fields: [cloId], references: [id])
+
+  createdById String?
+  createdBy   User? @relation("AssignmentCreator", fields: [createdById], references: [id])
+
+  submissions Submission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("assignments")
+}
+
+/*
+  =========================
+  SUBMISSION
+  =========================
+*/
+
+model Submission {
+  id        String           @id @default(uuid())
+  content   String?
+  fileUrl   String?
+  githubUrl String?
+  codeText  String?
+  status    SubmissionStatus @default(SUBMITTED)
+
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User @relation("StudentSubmissions", fields: [studentId], references: [id], onDelete: Cascade)
+
+  grade Grade?
+
+  feedbacks Feedback[]
+
+  submittedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([assignmentId, studentId])
+  @@map("submissions")
+}
+
+/*
+  =========================
+  GRADE
+  =========================
+*/
+
+model Grade {
+  id    String @id @default(uuid())
+  score Float
+  note  String?
+
+  submissionId String     @unique
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  lecturerId String?
+  lecturer   User? @relation("GradeLecturer", fields: [lecturerId], references: [id])
+
+  gradedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("grades")
+}
+
+/*
+  =========================
+  FEEDBACK
+  =========================
+*/
+
+model Feedback {
+  id               String         @id @default(uuid())
+  content          String
+  improvementAreas String?
+  source           FeedbackSource @default(MANUAL)
+
+  submissionId String
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  lecturerId String?
+  lecturer   User? @relation("FeedbackLecturer", fields: [lecturerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("feedbacks")
+}
+
+/*
+  =========================
+  QUIZ
+  =========================
+*/
+
+model Quiz {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  difficulty  Difficulty @default(MEDIUM)
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  lessonId String?
+  lesson   Lesson? @relation(fields: [lessonId], references: [id])
+
+  createdById String?
+  createdBy   User? @relation("QuizCreator", fields: [createdById], references: [id])
+
+  questions QuizQuestion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("quizzes")
+}
+
+/*
+  =========================
+  QUIZ QUESTION
+  =========================
+*/
+
+model QuizQuestion {
+  id            String       @id @default(uuid())
+  questionText  String
+  questionType  QuestionType @default(MULTIPLE_CHOICE)
+  options       Json?
+  correctAnswer String?
+  explanation   String?
+
+  quizId String
+  quiz   Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("quiz_questions")
+}
+
+/*
+  =========================
+  AI GENERATION LOG
+  =========================
+*/
+
+model AIGeneration {
+  id           String             @id @default(uuid())
+  type         AIGenerationType
+  prompt       String
+  result       Json?
+  status       AIGenerationStatus @default(SUCCESS)
+  errorMessage String?
+
+  userId String?
+  user   User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("ai_generations")
+}
+
+/*
+  =========================
+  NOTIFICATION
+  =========================
+*/
+
+model Notification {
+  id         String           @id @default(uuid())
+  type       NotificationType @default(SYSTEM)
+  title      String
+  message    String
+  isRead     Boolean          @default(false)
+  relatedUrl String?
+
+  userId String
+  user   User @relation("NotificationUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+/*
+  =========================
+  AI FEATURE STATUS
+  =========================
+*/
+
+model AIFeature {
+  id          String          @id @default(uuid())
+  key         String          @unique
+  name        String
+  description String?
+  status      AIFeatureStatus @default(COMING_SOON)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("ai_features")
+}
+
+/*
+  =========================
+  SYSTEM SETTING
+  =========================
+*/
+
+model SystemSetting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
 }
