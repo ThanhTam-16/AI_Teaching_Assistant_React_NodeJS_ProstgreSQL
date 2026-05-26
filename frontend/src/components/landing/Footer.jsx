@@ -5,18 +5,18 @@ export default function Footer() {
     <footer className="bg-gray-900 text-gray-400 py-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-                <img
-                src="/logo/logofpt.png"
-                alt="FPT logo"
-                className="h-12 w-auto object-contain bg-transparent"
-                />            
-                <div>
-                <span className="font-display font-bold text-white text-sm">AITA</span>
-                <span className="text-gray-500 text-xs ml-2">· AI Teaching Assistant</span>
-                </div>
+              {/* Logo */}
+              <div className="flex items-center gap-3">
+                  <img
+                  src="/logo/logo.png"
+                  alt="FPT logo"
+                  className="h-10 w-auto object-contain bg-transparent"
+                  />            
+              <div>
+              <span className="font-display font-bold text-white text-sm">AITA</span>
+              <span className="text-gray-500 text-xs ml-2">· AI Teaching Assistant</span>
             </div>
+          </div>
 
           {/* Nav */}
           <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 text-xs">

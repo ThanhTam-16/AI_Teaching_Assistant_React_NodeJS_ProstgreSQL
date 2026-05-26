@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 
 const NAV_LINKS = [
@@ -36,17 +37,17 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-            <a href="#" className="flex items-center gap group">
+          <Link to="/" className="flex items-center gap-2 group">
             <img
-                src="/logo/logofpt.png"
+                src="/logo/logo.png"
                 alt="FPT logo"
-                className="h-14 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                className="h-10 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
             />
             <div className="flex flex-col leading-tight">
               <span className="font-display font-bold text-fpt-orange text-base">AITA</span>
               <span className="text-gray-400 text-[10px] font-medium hidden sm:block">AI Teaching Assistant</span>
             </div>
-          </a>
+          </Link>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">
@@ -63,12 +64,12 @@ export default function Navbar() {
 
           {/* CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <button className="px-4 py-2 text-sm font-semibold text-fpt-orange border border-fpt-orange rounded-lg hover:bg-fpt-pastel transition-all duration-200">
+            <Link to="/login" className="px-4 py-2 text-sm font-semibold text-fpt-orange border border-fpt-orange rounded-lg hover:bg-fpt-pastel transition-all duration-200 text-center">
               Đăng nhập
-            </button>
-            <button className="px-4 py-2 text-sm font-semibold text-white bg-fpt-orange rounded-lg hover:bg-primary-700 shadow-orange-sm hover:shadow-orange-md transition-all duration-200">
+            </Link>
+            <Link to="/login" className="px-4 py-2 text-sm font-semibold text-white bg-fpt-orange rounded-lg hover:bg-primary-700 shadow-orange-sm hover:shadow-orange-md transition-all duration-200 text-center">
               Dùng thử miễn phí
-            </button>
+            </Link>
           </div>
 
           {/* Mobile menu toggle */}
@@ -95,12 +96,12 @@ export default function Navbar() {
               </button>
             ))}
             <div className="pt-2 flex flex-col gap-2">
-              <button className="w-full px-4 py-2.5 text-sm font-semibold text-fpt-orange border border-fpt-orange rounded-lg hover:bg-fpt-pastel transition-all">
+              <Link to="/login" className="w-full px-4 py-2.5 text-sm font-semibold text-fpt-orange border border-fpt-orange rounded-lg hover:bg-fpt-pastel transition-all text-center">
                 Đăng nhập
-              </button>
-              <button className="w-full px-4 py-2.5 text-sm font-semibold text-white bg-fpt-orange rounded-lg hover:bg-primary-700 transition-all">
+              </Link>
+              <Link to="/login" className="w-full px-4 py-2.5 text-sm font-semibold text-white bg-fpt-orange rounded-lg hover:bg-primary-700 transition-all text-center">
                 Dùng thử miễn phí
-              </button>
+              </Link>
             </div>
           </div>
         </div>

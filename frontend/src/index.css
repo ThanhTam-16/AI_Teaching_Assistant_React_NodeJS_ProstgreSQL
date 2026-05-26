@@ -1,11 +1,9 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
+  html { scroll-behavior: smooth; }
   body {
     font-family: 'Plus Jakarta Sans', sans-serif;
     background-color: #ffffff;
@@ -15,13 +13,7 @@
 }
 
 @layer utilities {
-  .animation-delay-100 { animation-delay: 0.1s; }
-  .animation-delay-200 { animation-delay: 0.2s; }
-  .animation-delay-300 { animation-delay: 0.3s; }
-  .animation-delay-400 { animation-delay: 0.4s; }
-  .animation-delay-500 { animation-delay: 0.5s; }
-  .animation-delay-600 { animation-delay: 0.6s; }
-
+  /* Scroll-reveal */
   .animate-on-scroll {
     opacity: 0;
     transform: translateY(24px);
@@ -31,19 +23,21 @@
     opacity: 1;
     transform: translateY(0);
   }
+
+  /* Animation delays */
+  .animation-delay-100 { animation-delay: 0.1s; }
+  .animation-delay-200 { animation-delay: 0.2s; }
+  .animation-delay-300 { animation-delay: 0.3s; }
+  .animation-delay-400 { animation-delay: 0.4s; }
+  .animation-delay-500 { animation-delay: 0.5s; }
+
+  /* animate-fade-up needs opacity:0 initial state */
+  .animate-fade-up  { opacity: 0; animation-fill-mode: forwards; }
+  .animate-fade-in  { opacity: 0; animation-fill-mode: forwards; }
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #FFF5EE;
-}
-::-webkit-scrollbar-thumb {
-  background: #FBBF80;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #F26522;
-}
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: #FFF5EE; }
+::-webkit-scrollbar-thumb { background: #FBBF80; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #F26522; }
