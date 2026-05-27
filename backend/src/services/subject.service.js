@@ -29,7 +29,7 @@ const getSubjects = async ({ page, limit, skip, search }) => {
     prisma.subject.count({ where }),
   ]);
 
-  return formatPaginatedResponse(subjects, total, page, limit);
+  return formatPaginatedResponse(subjects, total, page, limit, "subjects");
 };
 
 const getSubjectById = async (id) => {

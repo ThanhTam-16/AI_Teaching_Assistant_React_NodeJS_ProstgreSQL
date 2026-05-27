@@ -1,14 +1,15 @@
 const express = require("express");
-const dashboardController = require("../controllers/dashboard.controller");
+const settingController = require("../controllers/setting.controller");
 const { authenticate } = require("../middlewares/auth.middleware");
 const { authorizeRoles } = require("../middlewares/role.middleware");
 
 const router = express.Router();
 
-// All dashboard routes require login and ADMIN role
+// All AI features routes require login and ADMIN role
 router.use(authenticate);
 router.use(authorizeRoles("ADMIN"));
 
-router.get("/overview", dashboardController.getStats);
+router.get("/", settingController.getAIFeatures);
+router.patch("/:id/status", settingController.updateAIFeature);
 
 module.exports = router;

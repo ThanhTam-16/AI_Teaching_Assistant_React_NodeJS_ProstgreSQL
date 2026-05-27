@@ -6,6 +6,7 @@ const subjectRoutes = require("./subject.routes");
 const classRoutes = require("./class.routes");
 const dashboardRoutes = require("./dashboard.routes");
 const settingRoutes = require("./setting.routes");
+const aiFeatureRoutes = require("./aiFeature.routes");
 
 const router = express.Router();
 
@@ -13,7 +14,10 @@ router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/subjects", subjectRoutes);
 router.use("/classes", classRoutes);
-router.use("/dashboard", dashboardRoutes);
-router.use("/settings", settingRoutes);
+
+// Admin endpoints matching frontend calls
+router.use("/admin/dashboard", dashboardRoutes);
+router.use("/admin/ai-features", aiFeatureRoutes);
+router.use("/admin/settings", settingRoutes);
 
 module.exports = router;

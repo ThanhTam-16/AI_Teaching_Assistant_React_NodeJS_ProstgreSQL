@@ -12,9 +12,9 @@ const getAIFeatures = async (req, res, next) => {
 
 const updateAIFeature = async (req, res, next) => {
   try {
-    const { key } = req.params;
+    const idOrKey = req.params.id || req.params.key;
     const { status } = req.body;
-    const result = await settingService.updateAIFeature(key, status);
+    const result = await settingService.updateAIFeature(idOrKey, status);
 
     return successResponse(res, "AI feature status updated successfully", result, 200);
   } catch (error) {
@@ -25,7 +25,7 @@ const updateAIFeature = async (req, res, next) => {
 const getSystemSettings = async (req, res, next) => {
   try {
     const result = await settingService.getSystemSettings();
-    return successResponse(res, "System settings fetched successfully", result, 200);
+    return successResponse(res, "System settings fetched successfully", result.settings, 200);
   } catch (error) {
     next(error);
   }

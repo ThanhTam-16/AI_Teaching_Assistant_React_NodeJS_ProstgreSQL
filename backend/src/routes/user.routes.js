@@ -15,6 +15,7 @@ router.get("/", userController.getUsers);
 router.get("/:id", userController.getUserById);
 router.post("/", validate(validateCreateUser), userController.createUser);
 router.put("/:id", validate(validateUpdateUser), userController.updateUser);
+router.patch("/:id/status", userController.updateUserStatus);
 router.delete("/:id", userController.deleteUser);
 
 module.exports = router;

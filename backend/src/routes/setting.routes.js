@@ -14,10 +14,7 @@ const router = express.Router();
 router.use(authenticate);
 router.use(authorizeRoles("ADMIN"));
 
-router.get("/ai", settingController.getAIFeatures);
-router.put("/ai/:key", validate(validateUpdateAIFeature), settingController.updateAIFeature);
-
-router.get("/system", settingController.getSystemSettings);
-router.put("/system/:key", validate(validateUpdateSystemSetting), settingController.updateSystemSetting);
+router.get("/", settingController.getSystemSettings);
+router.put("/:key", validate(validateUpdateSystemSetting), settingController.updateSystemSetting);
 
 module.exports = router;

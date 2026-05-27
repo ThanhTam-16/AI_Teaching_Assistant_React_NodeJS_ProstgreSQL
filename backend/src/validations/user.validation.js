@@ -1,4 +1,7 @@
 const validateCreateUser = (body) => {
+  if (body.name !== undefined && body.fullName === undefined) {
+    body.fullName = body.name;
+  }
   const { fullName, email, password, role, status, phone } = body;
 
   if (!email || typeof email !== "string" || !email.includes("@")) {
@@ -39,6 +42,9 @@ const validateCreateUser = (body) => {
 };
 
 const validateUpdateUser = (body) => {
+  if (body.name !== undefined && body.fullName === undefined) {
+    body.fullName = body.name;
+  }
   const { fullName, email, password, role, status, phone } = body;
 
   if (email !== undefined && (typeof email !== "string" || !email.includes("@"))) {

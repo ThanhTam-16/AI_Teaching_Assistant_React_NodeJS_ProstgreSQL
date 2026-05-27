@@ -44,7 +44,7 @@ const getClasses = async ({ page, limit, skip, search }) => {
     };
   });
 
-  return formatPaginatedResponse(items, total, page, limit);
+  return formatPaginatedResponse(items, total, page, limit, "classes");
 };
 
 const getClassById = async (id) => {

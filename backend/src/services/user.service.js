@@ -41,7 +41,12 @@ const getUsers = async ({ page, limit, skip, search, role, status }) => {
     prisma.user.count({ where }),
   ]);
 
-  return formatPaginatedResponse(users, total, page, limit);
+  const formattedUsers = users.map((u) => ({
+    ...u,
+    name: u.fullName,
+  }));
+
+  return formatPaginatedResponse(formattedUsers, total, page, limit, "users");
 };
 
 const getUserById = async (id) => {
@@ -66,10 +71,16 @@ const getUserById = async (id) => {
     throw error;
   }
 
-  return user;
+  return {
+    ...user,
+    name: user.fullName,
+  };
 };
 
 const createUser = async (userData) => {
+  if (userData.name && !userData.fullName) {
+    userData.fullName = userData.name;
+  }
   const { email, password, fullName, role, phone, avatarUrl, status } = userData;
 
   const existingUser = await prisma.user.findUnique({
@@ -106,7 +117,10 @@ const createUser = async (userData) => {
     },
   });
 
-  return newUser;
+  return {
+    ...newUser,
+    name: newUser.fullName,
+  };
 };
 
 const updateUser = async (id, updateData) => {
@@ -120,7 +134,12 @@ const updateUser = async (id, updateData) => {
     throw error;
   }
 
+  if (updateData.name !== undefined && updateData.fullName === undefined) {
+    updateData.fullName = updateData.name;
+  }
+
   const data = { ...updateData };
+  delete data.name;
 
   if (data.email && data.email !== user.email) {
     const existingEmail = await prisma.user.findUnique({
@@ -156,7 +175,10 @@ const updateUser = async (id, updateData) => {
     },
   });
 
-  return updatedUser;
+  return {
+    ...updatedUser,
+    name: updatedUser.fullName,
+  };
 };
 
 const deleteUser = async (id) => {
@@ -177,10 +199,44 @@ const deleteUser = async (id) => {
   return { id };
 };
 
+const updateUserStatus = async (id, status) => {
+  const user = await prisma.user.findUnique({
+    where: { id },
+  });
+
+  if (!user) {
+    const error = new Error("User not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id },
+    data: { status },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      role: true,
+      phone: true,
+      avatarUrl: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return {
+    ...updatedUser,
+    name: updatedUser.fullName,
+  };
+};
+
 module.exports = {
   getUsers,
   getUserById,
   createUser,
   updateUser,
   deleteUser,
+  updateUserStatus,
 };

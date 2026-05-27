@@ -65,10 +65,23 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
+const updateUserStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const result = await userService.updateUserStatus(id, status);
+
+    return successResponse(res, "User status updated successfully", result, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getUsers,
   getUserById,
   createUser,
   updateUser,
   deleteUser,
+  updateUserStatus,
 };

@@ -5,10 +5,15 @@ const getPaginationParams = (query) => {
   return { page, limit, skip };
 };
 
-const formatPaginatedResponse = (data, total, page, limit) => {
+const formatPaginatedResponse = (data, total, page, limit, key = 'items') => {
   const totalPages = Math.ceil(total / limit);
   return {
+    [key]: data,
     items: data,
+    total,
+    page,
+    totalPages,
+    limit,
     meta: {
       totalItems: total,
       totalPages,
