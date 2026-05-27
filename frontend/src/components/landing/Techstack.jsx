@@ -38,7 +38,7 @@ export default function TechStack() {
         </div>
 
         {/* Tech stack */}
-        <div className="text-center mb-10 animate-on-scroll">
+        {/* <div className="text-center mb-10 animate-on-scroll">
           <span className="inline-block px-3 py-1 rounded-full bg-fpt-pale border border-fpt-light/40 text-fpt-orange text-xs font-semibold uppercase tracking-wide mb-3">
             Công nghệ
           </span>
@@ -64,7 +64,7 @@ export default function TechStack() {
               </div>
             </div>
           ))}
-        </div>
+        </div> */}
       </div>
     </section>
   )
