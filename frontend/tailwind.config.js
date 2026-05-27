@@ -1,5 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  // 'class' strategy: dark mode toggled by adding class="dark" to a parent element.
+  darkMode: 'class',
+
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
@@ -83,15 +86,17 @@ export default {
         'float':        'float 3s ease-in-out infinite',
         'spin-slow':    'spin 8s linear infinite',
         'pulse-soft':   'pulseSoft 2s ease-in-out infinite',
+        'pulse-orange': 'pulse-orange 2s ease-in-out infinite',
         'shake':        'shake 0.4s ease-in-out',
       },
       keyframes: {
         fadeUp:       { '0%': { opacity:'0', transform:'translateY(20px)' }, '100%': { opacity:'1', transform:'translateY(0)' } },
         fadeIn:       { '0%': { opacity:'0' }, '100%': { opacity:'1' } },
         slideInLeft:  { '0%': { opacity:'0', transform:'translateX(-20px)' }, '100%': { opacity:'1', transform:'translateX(0)' } },
-        float:        { '0%,100%': { transform:'translateY(0)' }, '50%': { transform:'translateY(-8px)' } },
+        float:        { '0%,100%': { transform:'translateY(0)' }, '50%': { transform:'translateY(-6px)' } },
         pulseSoft:    { '0%,100%': { opacity:'1' }, '50%': { opacity:'0.6' } },
-        shake:        { '0%,100%': { transform:'translateX(0)' }, '20%,60%': { transform:'translateX(-6px)' }, '40%,80%': { transform:'translateX(6px)' } },
+        'pulse-orange': { '0%,100%': { boxShadow:'0 0 0 0 rgba(242,101,34,0.4)' }, '50%': { boxShadow:'0 0 0 8px rgba(242,101,34,0)' } },
+        shake:        { '0%,100%': { transform:'translateX(0)' }, '20%': { transform:'translateX(-4px)' }, '40%': { transform:'translateX(4px)' }, '60%': { transform:'translateX(-4px)' }, '80%': { transform:'translateX(4px)' } },
       },
       backgroundImage: {
         'auth-pattern':     "radial-gradient(circle at 20% 20%, rgba(242,101,34,0.07) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(251,191,128,0.1) 0%, transparent 50%)",

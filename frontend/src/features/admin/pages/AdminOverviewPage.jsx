@@ -1,190 +1,314 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../../hooks/useAuth'
+import React, { useEffect, useState } from 'react'
 import {
-  BookOpen, Users, FileText, BarChart3,
-  Sparkles, Bell, LogOut, ChevronRight,
-  GraduationCap, ClipboardList, Star
-} from 'lucide-react'
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
+} from 'recharts'
+import { Users, GraduationCap, UserCheck, BookOpen, Bot, Clock, Activity } from 'lucide-react'
+import StatCard from '../components/StatCard'
+import PageHeader from '../../../components/common/PageHeader'
+import { getDashboardOverview } from '../../../services/admin.api'
+import { formatRelative } from '../../../utils/formatDate'
+import { useTheme } from '../../../contexts/ThemeContext'
 
-// ── Stat card ─────────────────────────────────────────────────────────────────
-function StatCard({ icon, label, value, sub, color }) {
-  const colors = {
-    green:  { bg: 'bg-lecturer-50',  icon: 'bg-lecturer-100 text-lecturer-600', val: 'text-lecturer-700' },
-    orange: { bg: 'bg-fpt-pastel',   icon: 'bg-fpt-pale text-fpt-orange',       val: 'text-fpt-orange'   },
-    teal:   { bg: 'bg-cyan-50',      icon: 'bg-cyan-100 text-cyan-600',          val: 'text-cyan-700'     },
-    purple: { bg: 'bg-purple-50',    icon: 'bg-purple-100 text-purple-600',      val: 'text-purple-700'   },
-  }
-  const c = colors[color] || colors.green
+// ── Mock data (replace with API response fields when backend ready) ───────────
+const MOCK_USER_GROWTH = [
+  { month: 'T1', users: 12, lecturers: 3, students: 9 },
+  { month: 'T2', users: 19, lecturers: 4, students: 15 },
+  { month: 'T3', users: 28, lecturers: 5, students: 23 },
+  { month: 'T4', users: 35, lecturers: 6, students: 29 },
+  { month: 'T5', users: 47, lecturers: 8, students: 39 },
+  { month: 'T6', users: 58, lecturers: 9, students: 49 },
+]
+
+const MOCK_ACTIVITY = [
+  { day: 'T2', slides: 14, assignments: 8, submissions: 22 },
+  { day: 'T3', slides: 20, assignments: 12, submissions: 31 },
+  { day: 'T4', slides: 9,  assignments: 6,  submissions: 18 },
+  { day: 'T5', slides: 25, assignments: 15, submissions: 40 },
+  { day: 'T6', slides: 18, assignments: 10, submissions: 28 },
+  { day: 'T7', slides: 5,  assignments: 3,  submissions: 8  },
+  { day: 'CN', slides: 3,  assignments: 2,  submissions: 5  },
+]
+
+const MOCK_ROLE_PIE = [
+  { name: 'Sinh viên',  value: 68, color: '#10b981' },
+  { name: 'Giảng viên', value: 24, color: '#3b82f6' },
+  { name: 'Admin',      value: 8,  color: '#f97316' },
+]
+
+// ── Sub-components ─────────────────────────────────────────────────────────────
+function Skeleton({ className }) {
+  return <div className={`dark:bg-gray-800 bg-gray-200 rounded animate-pulse ${className}`} />
+}
+
+function ChartCard({ title, children, className = '' }) {
   return (
-    <div className={`${c.bg} rounded-2xl border border-white p-5 flex items-start gap-4 shadow-card`}>
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${c.icon}`}>
-        {icon}
+    <div className={`dark:bg-gray-900/60 bg-white border dark:border-gray-800/60 border-gray-200/60 rounded-xl p-4 ${className}`}>
+      <h3 className="text-xs font-bold dark:text-gray-300 text-gray-700 mb-4">{title}</h3>
+      {children}
+    </div>
+  )
+}
+
+function ActivityRow({ name, role, action, time }) {
+  const ROLE_STYLE = {
+    ADMIN:    'bg-orange-500/10 text-orange-400 dark:border-orange-500/20 border-orange-200',
+    LECTURER: 'bg-blue-500/10 text-blue-400 dark:border-blue-500/20 border-blue-200',
+    STUDENT:  'bg-emerald-500/10 text-emerald-400 dark:border-emerald-500/20 border-emerald-200',
+  }
+  return (
+    <div className="flex items-center gap-2.5 py-2 border-b dark:border-gray-800/40 border-gray-100 last:border-0">
+      <div className="w-7 h-7 rounded-full dark:bg-gray-800 bg-gray-100 flex items-center justify-center flex-shrink-0">
+        <span className="text-[10px] font-bold dark:text-gray-300 text-gray-500">{name?.[0]?.toUpperCase() ?? '?'}</span>
       </div>
-      <div>
-        <div className={`font-display font-bold text-2xl ${c.val}`}>{value}</div>
-        <div className="text-xs font-semibold text-gray-700 mt-0.5">{label}</div>
-        {sub && <div className="text-[11px] text-gray-400 mt-0.5">{sub}</div>}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium dark:text-gray-200 text-gray-700 truncate">{name}</span>
+          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${ROLE_STYLE[role] ?? 'dark:bg-gray-800 text-gray-400 dark:border-gray-700 border-gray-200'}`}>
+            {role}
+          </span>
+        </div>
+        <div className="text-[10px] dark:text-gray-500 text-gray-400 truncate">{action}</div>
+      </div>
+      <div className="text-[10px] dark:text-gray-600 text-gray-400 flex-shrink-0 flex items-center gap-1">
+        <Clock size={9} />
+        {formatRelative(time)}
       </div>
     </div>
   )
 }
 
-// ── Quick action button ───────────────────────────────────────────────────────
-function QuickAction({ icon, label, desc, soon }) {
+// ── Custom tooltip for charts ─────────────────────────────────────────────────
+function CustomTooltip({ active, payload, label, dark }) {
+  if (!active || !payload?.length) return null
   return (
-    <button
-      disabled={soon}
-      className="group relative flex items-center gap-3 bg-white border border-lecturer-100 rounded-2xl px-4 py-3.5 text-left hover:border-lecturer-300 hover:shadow-green-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-default w-full"
-    >
-      <div className="w-9 h-9 rounded-xl bg-lecturer-50 flex items-center justify-center flex-shrink-0 group-hover:bg-lecturer-100 transition-colors text-lecturer-600">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-gray-800">{label}</div>
-        <div className="text-xs text-gray-400">{desc}</div>
-      </div>
-      {soon
-        ? <span className="text-[10px] font-bold bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">Sắp có</span>
-        : <ChevronRight size={14} className="text-gray-300 group-hover:text-lecturer-500 transition-colors" />
-      }
-    </button>
+    <div className={`px-3 py-2 rounded-lg border text-xs shadow-xl ${
+      dark ? 'bg-gray-900 border-gray-700 text-gray-200' : 'bg-white border-gray-200 text-gray-700'
+    }`}>
+      <div className="font-semibold mb-1">{label}</div>
+      {payload.map((p) => (
+        <div key={p.name} className="flex items-center gap-2">
+          <span style={{ color: p.color }}>●</span>
+          <span>{p.name}: <span className="font-bold">{p.value}</span></span>
+        </div>
+      ))}
+    </div>
   )
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function LecturerOverviewPage() {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
+export default function AdminOverviewPage() {
+  const [data,    setData]    = useState(null)
+  const [loading, setLoading] = useState(true)
+  const { dark } = useTheme()
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/', { replace: true })
-  }
+  const gridColor  = dark ? '#1f2937' : '#f3f4f6'
+  const axisColor  = dark ? '#4b5563' : '#9ca3af'
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const res = await getDashboardOverview()
+        setData(res.data.data)
+      } catch {
+        // use mock data gracefully
+        setData(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetch()
+  }, [])
+
+  const stats = data?.stats ?? {}
+  const recentUsers = data?.recentUsers ?? []
+  const aiFeatures  = data?.aiFeatures  ?? []
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-lecturer-50 via-white to-fpt-pastel">
+    <div className="space-y-4 max-w-screen-2xl">
 
-      {/* ── Header ────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-lecturer-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          {/* Brand */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-green-gradient flex items-center justify-center">
-              <Sparkles size={14} className="text-white" />
-            </div>
-            <div>
-              <span className="font-display font-bold text-lecturer-600 text-sm">AITA</span>
-              <span className="hidden sm:inline text-gray-400 text-xs ml-1.5">· Giảng viên</span>
-            </div>
-          </div>
+      <PageHeader
+        title="Tổng quan hệ thống"
+        description="Theo dõi toàn bộ hoạt động AITA theo thời gian thực"
+        stats={[
+          { label: 'Hệ thống', value: 'Hoạt động', accent: 'emerald' },
+          { label: 'AI modules', value: `${aiFeatures.filter(f=>f.isActive).length || 4} bật`, accent: 'orange' },
+        ]}
+      />
 
-          {/* User + actions */}
-          <div className="flex items-center gap-2">
-            <button className="relative p-2 text-gray-400 hover:text-lecturer-600 hover:bg-lecturer-50 rounded-lg transition-all">
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-fpt-orange rounded-full" />
-            </button>
+      {/* ── Stat cards ── */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        <StatCard icon={Users}        label="Tổng người dùng" value={loading ? null : (stats.totalUsers   ?? 156)} sub="tài khoản"        accent="orange"  loading={loading} />
+        <StatCard icon={GraduationCap} label="Giảng viên"     value={loading ? null : (stats.totalLecturers ?? 24)} sub="đang hoạt động" accent="blue"    loading={loading} />
+        <StatCard icon={UserCheck}    label="Sinh viên"        value={loading ? null : (stats.totalStudents  ?? 128)} sub="đã đăng ký"   accent="emerald" loading={loading} />
+        <StatCard icon={BookOpen}     label="Môn học"          value={loading ? null : (stats.totalSubjects  ?? 18)} sub="trong hệ thống" accent="violet" loading={loading} />
+      </div>
 
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-lecturer-50 rounded-xl border border-lecturer-100">
-              <div className="w-6 h-6 rounded-full bg-green-gradient flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-                {user?.fullName?.[0] || 'G'}
+      {/* ── Charts row 1 ── */}
+      <div className="grid lg:grid-cols-3 gap-3">
+
+        {/* Area chart — user growth */}
+        <ChartCard title="Tăng trưởng người dùng (6 tháng)" className="lg:col-span-2">
+          {loading ? <Skeleton className="h-44 w-full" /> : (
+            <ResponsiveContainer width="100%" height={160}>
+              <AreaChart data={data?.userGrowth ?? MOCK_USER_GROWTH} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gStudents" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.02} />
+                  </linearGradient>
+                  <linearGradient id="gLecturers" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: axisColor }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: axisColor }} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip dark={dark} />} />
+                <Area type="monotone" dataKey="students"  name="Sinh viên"  stroke="#10b981" strokeWidth={1.5} fill="url(#gStudents)"  dot={false} />
+                <Area type="monotone" dataKey="lecturers" name="Giảng viên" stroke="#3b82f6" strokeWidth={1.5} fill="url(#gLecturers)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+          <div className="flex items-center gap-4 mt-2">
+            {[{ color:'#10b981', label:'Sinh viên' }, { color:'#3b82f6', label:'Giảng viên' }].map(l => (
+              <div key={l.label} className="flex items-center gap-1.5">
+                <span className="w-2.5 h-px rounded" style={{ background: l.color, display:'inline-block' }} />
+                <span className="text-[10px] dark:text-gray-500 text-gray-400">{l.label}</span>
               </div>
-              <span className="text-xs font-semibold text-gray-700 max-w-[120px] truncate">{user?.fullName}</span>
-            </div>
-
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-500 border border-gray-200 rounded-xl hover:border-red-200 hover:text-red-500 hover:bg-red-50 transition-all"
-            >
-              <LogOut size={13} />
-              <span className="hidden sm:inline">Đăng xuất</span>
-            </button>
+            ))}
           </div>
-        </div>
-      </header>
+        </ChartCard>
 
-      {/* ── Main content ──────────────────────────────────────────── */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-
-        {/* Welcome */}
-        <div className="mb-8 animate-fade-up">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-lecturer-100 rounded-full mb-3">
-            <GraduationCap size={13} className="text-lecturer-600" />
-            <span className="text-xs font-bold text-lecturer-700 uppercase tracking-wide">Giảng viên</span>
+        {/* Pie — role distribution */}
+        <ChartCard title="Phân bố vai trò">
+          {loading ? <Skeleton className="h-44 w-full" /> : (
+            <ResponsiveContainer width="100%" height={160}>
+              <PieChart>
+                <Pie
+                  data={data?.roleDistribution ?? MOCK_ROLE_PIE}
+                  cx="50%" cy="50%"
+                  innerRadius={42} outerRadius={62}
+                  paddingAngle={3}
+                  dataKey="value"
+                >
+                  {(data?.roleDistribution ?? MOCK_ROLE_PIE).map((entry, i) => (
+                    <Cell key={i} fill={entry.color} stroke="transparent" />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip dark={dark} />} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+          <div className="flex flex-col gap-1.5 mt-1">
+            {(data?.roleDistribution ?? MOCK_ROLE_PIE).map((r) => (
+              <div key={r.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: r.color }} />
+                  <span className="text-[10px] dark:text-gray-400 text-gray-500">{r.name}</span>
+                </div>
+                <span className="text-[10px] font-bold dark:text-gray-300 text-gray-600">{r.value}%</span>
+              </div>
+            ))}
           </div>
-          <h1 className="font-display font-bold text-2xl text-gray-900 mb-1">
-            Xin chào, <span className="text-lecturer-600">{user?.fullName || 'Giảng viên'}</span> 👋
-          </h1>
-          <p className="text-gray-500 text-sm">{user?.email} · Học kỳ Summer 2026</p>
-        </div>
+        </ChartCard>
+      </div>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
-          <StatCard icon={<BookOpen size={18}/>}      label="Lớp học"       value="3"  sub="Đang hoạt động" color="green"  />
-          <StatCard icon={<Users size={18}/>}         label="Sinh viên"     value="72" sub="Tổng 3 lớp"      color="orange" />
-          <StatCard icon={<FileText size={18}/>}      label="Bài tập"       value="12" sub="Đã tạo"           color="teal"   />
-          <StatCard icon={<BarChart3 size={18}/>}     label="Bài nộp"       value="48" sub="Chờ chấm điểm"   color="purple" />
-        </div>
+      {/* ── Charts row 2 ── */}
+      <div className="grid lg:grid-cols-3 gap-3">
 
-        {/* Two-column layout */}
-        <div className="grid lg:grid-cols-5 gap-6">
-
-          {/* Quick actions — 3 cols */}
-          <div className="lg:col-span-3 animate-fade-up" style={{ animationDelay: '0.15s' }}>
-            <h2 className="font-display font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2">
-              <Sparkles size={14} className="text-fpt-orange" /> Công cụ AI
-            </h2>
-            <div className="space-y-2.5">
-              <QuickAction icon={<span className="text-base">🎨</span>} label="Tạo slide từ CLO"        desc="AI tự động tạo nội dung bài giảng" soon />
-              <QuickAction icon={<span className="text-base">📝</span>} label="Tạo bài tập"             desc="Bài tập theo chủ đề và độ khó"    soon />
-              <QuickAction icon={<span className="text-base">💻</span>} label="Phân tích code sinh viên" desc="Đánh giá chất lượng và logic"      soon />
-              <QuickAction icon={<span className="text-base">🧠</span>} label="Phản hồi học tập AI"     desc="Gợi ý cá nhân hoá cho sinh viên"   soon />
-            </div>
-
-            <h2 className="font-display font-semibold text-gray-800 text-sm mt-6 mb-3 flex items-center gap-2">
-              <ClipboardList size={14} className="text-lecturer-600" /> Quản lý
-            </h2>
-            <div className="space-y-2.5">
-              <QuickAction icon={<BookOpen size={16}/>}   label="Quản lý lớp học"    desc="Xem và quản lý danh sách lớp"   soon />
-              <QuickAction icon={<FileText size={16}/>}   label="Bài nộp của sinh viên" desc="Xem và chấm bài tập đã nộp"  soon />
-              <QuickAction icon={<BarChart3 size={16}/>}  label="Báo cáo & Điểm số"  desc="Tổng hợp kết quả học tập"       soon />
-            </div>
+        {/* Bar — weekly AI activity */}
+        <ChartCard title="Hoạt động AI (7 ngày)" className="lg:col-span-2">
+          {loading ? <Skeleton className="h-40 w-full" /> : (
+            <ResponsiveContainer width="100%" height={140}>
+              <BarChart data={data?.weeklyActivity ?? MOCK_ACTIVITY} margin={{ top: 4, right: 4, left: -28, bottom: 0 }} barSize={10} barGap={2}>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                <XAxis dataKey="day" tick={{ fontSize: 10, fill: axisColor }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: axisColor }} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip dark={dark} />} />
+                <Bar dataKey="slides"      name="Slides"      fill="#f97316" radius={[3,3,0,0]} />
+                <Bar dataKey="assignments" name="Bài tập"     fill="#3b82f6" radius={[3,3,0,0]} />
+                <Bar dataKey="submissions" name="Nộp bài"     fill="#10b981" radius={[3,3,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+          <div className="flex items-center gap-4 mt-2">
+            {[{ color:'#f97316',label:'Slides' },{ color:'#3b82f6',label:'Bài tập' },{ color:'#10b981',label:'Nộp bài' }].map(l => (
+              <div key={l.label} className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: l.color }} />
+                <span className="text-[10px] dark:text-gray-500 text-gray-400">{l.label}</span>
+              </div>
+            ))}
           </div>
+        </ChartCard>
 
-          {/* Activity feed — 2 cols */}
-          <div className="lg:col-span-2 animate-fade-up" style={{ animationDelay: '0.2s' }}>
-            <h2 className="font-display font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2">
-              <Bell size={14} className="text-fpt-orange" /> Hoạt động gần đây
-            </h2>
-            <div className="bg-white rounded-2xl border border-lecturer-100 overflow-hidden">
-              {[
-                { icon: '📥', text: 'Nguyễn Văn A đã nộp bài tập Lab 3',   time: '5 phút trước',   dot: 'bg-green-400'  },
-                { icon: '🤖', text: 'AI đã tạo xong slide Chương 5',        time: '1 giờ trước',    dot: 'bg-fpt-orange' },
-                { icon: '📥', text: 'Trần Thị B đã nộp bài Assignment 2',  time: '2 giờ trước',    dot: 'bg-green-400'  },
-                { icon: '📊', text: 'Báo cáo tuần được tạo tự động',        time: 'Hôm qua',        dot: 'bg-blue-400'   },
-                { icon: '👤', text: 'Sinh viên mới tham gia lớp SE1234',    time: 'Hôm qua',        dot: 'bg-purple-400' },
-              ].map((item, i) => (
-                <div key={i} className={`flex items-start gap-3 px-4 py-3 ${i < 4 ? 'border-b border-gray-50' : ''}`}>
-                  <span className="text-base mt-0.5 flex-shrink-0">{item.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-700 leading-relaxed">{item.text}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{item.time}</p>
+        {/* AI module status */}
+        <ChartCard title="Module AI">
+          {loading ? (
+            <div className="space-y-2">
+              {[1,2,3,4].map(i => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(aiFeatures.length > 0 ? aiFeatures : [
+                { id:1, name:'Slide Generator',    isActive: true  },
+                { id:2, name:'Exercise AI',        isActive: true  },
+                { id:3, name:'Code Analyzer',      isActive: false },
+                { id:4, name:'Feedback AI',        isActive: true  },
+              ]).map((f) => (
+                <div key={f.id} className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs ${
+                  f.isActive
+                    ? 'dark:bg-orange-500/5 bg-orange-50 dark:border-orange-500/20 border-orange-200'
+                    : 'dark:bg-gray-800/30 bg-gray-50 dark:border-gray-800 border-gray-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${f.isActive ? 'bg-orange-500 animate-pulse' : 'dark:bg-gray-600 bg-gray-300'}`} />
+                    <span className={f.isActive ? 'dark:text-gray-200 text-gray-700' : 'dark:text-gray-500 text-gray-400'}>
+                      {f.name}
+                    </span>
                   </div>
-                  <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${item.dot}`} />
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                    f.isActive ? 'text-orange-400 dark:bg-orange-500/10 bg-orange-100' : 'dark:text-gray-600 text-gray-400 dark:bg-gray-800 bg-gray-100'
+                  }`}>
+                    {f.isActive ? 'ON' : 'OFF'}
+                  </span>
                 </div>
               ))}
             </div>
+          )}
+          <a href="/admin/ai-settings" className="block text-center text-[10px] text-orange-400 hover:text-orange-300 transition-colors mt-3">
+            Quản lý →
+          </a>
+        </ChartCard>
+      </div>
 
-            {/* Coming soon banner */}
-            <div className="mt-4 bg-gradient-to-br from-lecturer-50 to-fpt-pastel rounded-2xl border border-lecturer-100 p-4 text-center">
-              <Star size={18} className="mx-auto text-fpt-orange mb-2" />
-              <p className="text-xs font-semibold text-gray-700 mb-1">Dashboard đầy đủ sắp ra mắt</p>
-              <p className="text-[10px] text-gray-400">Các tính năng quản lý lớp học và AI đang được phát triển.</p>
-            </div>
-          </div>
+      {/* ── Recent users ── */}
+      <ChartCard title="Người dùng mới nhất">
+        <div className="flex items-center justify-between mb-2">
+          <span />
+          <a href="/admin/users" className="text-[10px] text-orange-400 hover:text-orange-300 transition-colors">Xem tất cả →</a>
         </div>
-      </main>
+        {loading ? (
+          <div className="space-y-2">
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="flex items-center gap-2.5">
+                <div className="w-7 h-7 dark:bg-gray-800 bg-gray-200 rounded-full animate-pulse" />
+                <div className="flex-1 space-y-1">
+                  <div className="h-2.5 dark:bg-gray-800 bg-gray-200 rounded animate-pulse w-28" />
+                  <div className="h-2 dark:bg-gray-800 bg-gray-200 rounded animate-pulse w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : recentUsers.length === 0 ? (
+          <div className="text-center py-6 text-xs dark:text-gray-600 text-gray-400">Chưa có người dùng mới.</div>
+        ) : (
+          recentUsers.map((u, i) => (
+            <ActivityRow key={u.id ?? i} name={u.name} role={u.role} action="Đăng ký tài khoản" time={u.createdAt} />
+          ))
+        )}
+      </ChartCard>
     </div>
   )
 }

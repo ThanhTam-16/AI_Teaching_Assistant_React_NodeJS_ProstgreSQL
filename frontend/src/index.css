@@ -1,14 +1,30 @@
-﻿@tailwind base;
+﻿/* ── Google Font ─────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  html { scroll-behavior: smooth; }
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     font-family: 'Plus Jakarta Sans', sans-serif;
     background-color: #ffffff;
     color: #1a1a1a;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Dark mode body background when inside a .dark wrapper */
+  .dark body,
+  .dark {
+    background-color: #111827;
+    color: #f3f4f6;
+    color-scheme: dark;
   }
 }
 
@@ -36,8 +52,65 @@
   .animate-fade-in  { opacity: 0; animation-fill-mode: forwards; }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar       { width: 5px; }
-::-webkit-scrollbar-track { background: #FFF5EE; }
-::-webkit-scrollbar-thumb { background: #FBBF80; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #F26522; }
+/* ── Custom scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 4px; height: 4px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #d1d5db; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+.dark ::-webkit-scrollbar-thumb       { background: #374151; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+
+/* ── Sonner Toast overrides ─────────────────────────────────────────────── */
+/* Light mode */
+[data-sonner-toaster] [data-type='success'] {
+  --normal-bg: #f0fdf4;
+  --normal-border: #bbf7d0;
+  --normal-text: #166534;
+}
+[data-sonner-toaster] [data-type='error'] {
+  --normal-bg: #fff1f2;
+  --normal-border: #fecdd3;
+  --normal-text: #9f1239;
+}
+[data-sonner-toaster] [data-type='info'] {
+  --normal-bg: #eff6ff;
+  --normal-border: #bfdbfe;
+  --normal-text: #1e40af;
+}
+[data-sonner-toaster] [data-type='warning'] {
+  --normal-bg: #fffbeb;
+  --normal-border: #fde68a;
+  --normal-text: #92400e;
+}
+
+/* Dark mode — Sonner reads data-theme="dark" on closest ancestor */
+.dark [data-sonner-toaster],
+[data-theme='dark'] [data-sonner-toaster] {
+  --normal-bg: #111827;
+  --normal-border: #1f2937;
+  --normal-text: #f9fafb;
+}
+.dark [data-sonner-toaster] [data-type='success'],
+[data-theme='dark'] [data-sonner-toaster] [data-type='success'] {
+  --normal-bg: #052e16;
+  --normal-border: #14532d;
+  --normal-text: #86efac;
+}
+.dark [data-sonner-toaster] [data-type='error'],
+[data-theme='dark'] [data-sonner-toaster] [data-type='error'] {
+  --normal-bg: #2d0a0a;
+  --normal-border: #7f1d1d;
+  --normal-text: #fca5a5;
+}
+.dark [data-sonner-toaster] [data-type='info'],
+[data-theme='dark'] [data-sonner-toaster] [data-type='info'] {
+  --normal-bg: #0c1a3a;
+  --normal-border: #1e3a8a;
+  --normal-text: #93c5fd;
+}
+
+/* ── Admin layout — ensure full height on html/body ────────────────────── */
+html, body, #root {
+  height: 100%;
+}
