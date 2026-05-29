@@ -14,7 +14,7 @@ AI TEACHING ASSISTANT/
 │   │   │   ├── env.js                                     // ĐÃ CÓ
 │   │   │   └── ai.config.js                               // CHƯA CÓ
 │   │   │
-│   │   ├── models/                                        // CHƯA CÓ 
+│   │   ├── models/                                        // CHƯA CÓ
 │   │   │   ├── user.model.js                              // CHƯA CÓ
 │   │   │   ├── class.model.js                             // CHƯA CÓ
 │   │   │   ├── subject.model.js                           // CHƯA CÓ
@@ -28,20 +28,22 @@ AI TEACHING ASSISTANT/
 │   │   │   └── aiGeneration.model.js                      // CHƯA CÓ
 │   │   │
 │   │   ├── controllers/
+│   │   │   ├── ai.controller.js                           // ĐÃ CÓ 
+│   │   │   ├── assignment.controller.js                   // ĐÃ CÓ 
 │   │   │   ├── auth.controller.js                         // ĐÃ CÓ
 │   │   │   ├── class.controller.js                        // ĐÃ CÓ
+│   │   │   ├── clo.controller.js                          // ĐÃ CÓ 
 │   │   │   ├── dashboard.controller.js                    // ĐÃ CÓ
-│   │   │   ├── setting.controller.js                      // ĐÃ CÓ - file thêm cho admin setting
+│   │   │   ├── feedback.controller.js                     // ĐÃ CÓ 
+│   │   │   ├── grade.controller.js                        // ĐÃ CÓ 
+│   │   │   ├── lesson.controller.js                       // ĐÃ CÓ 
+│   │   │   ├── quiz.controller.js                         // ĐÃ CÓ - file thêm cho quiz
+│   │   │   ├── report.controller.js                       // ĐÃ CÓ - file thêm cho report
+│   │   │   ├── setting.controller.js                      // ĐÃ CÓ
 │   │   │   ├── subject.controller.js                      // ĐÃ CÓ
+│   │   │   ├── submission.controller.js                   // ĐÃ CÓ 
 │   │   │   ├── user.controller.js                         // ĐÃ CÓ
-│   │   │   ├── clo.controller.js                          // CHƯA CÓ
-│   │   │   ├── lesson.controller.js                       // CHƯA CÓ
-│   │   │   ├── assignment.controller.js                   // CHƯA CÓ
-│   │   │   ├── submission.controller.js                   // CHƯA CÓ
-│   │   │   ├── grade.controller.js                        // CHƯA CÓ
-│   │   │   ├── feedback.controller.js                     // CHƯA CÓ
-│   │   │   ├── notification.controller.js                 // CHƯA CÓ
-│   │   │   └── ai.controller.js                           // CHƯA CÓ
+│   │   │   └── notification.controller.js                 // CHƯA CÓ
 │   │   │
 │   │   ├── middlewares/
 │   │   │   ├── auth.middleware.js                         // ĐÃ CÓ
@@ -51,37 +53,41 @@ AI TEACHING ASSISTANT/
 │   │   │   └── upload.middleware.js                       // CHƯA CÓ
 │   │   │
 │   │   ├── routes/
+│   │   │   ├── ai.routes.js                               // ĐÃ CÓ 
+│   │   │   ├── assignment.routes.js                       // ĐÃ CÓ 
 │   │   │   ├── auth.routes.js                             // ĐÃ CÓ
 │   │   │   ├── class.routes.js                            // ĐÃ CÓ
+│   │   │   ├── clo.routes.js                              // ĐÃ CÓ 
 │   │   │   ├── dashboard.routes.js                        // ĐÃ CÓ
+│   │   │   ├── feedback.routes.js                         // ĐÃ CÓ 
+│   │   │   ├── grade.routes.js                            // ĐÃ CÓ 
 │   │   │   ├── index.js                                   // ĐÃ CÓ
-│   │   │   ├── setting.routes.js                          // ĐÃ CÓ - file thêm cho admin setting
+│   │   │   ├── lesson.routes.js                           // ĐÃ CÓ 
+│   │   │   ├── quiz.routes.js                             // ĐÃ CÓ - file thêm cho quiz
+│   │   │   ├── report.routes.js                           // ĐÃ CÓ - file thêm cho report
+│   │   │   ├── setting.routes.js                          // ĐÃ CÓ
 │   │   │   ├── subject.routes.js                          // ĐÃ CÓ
+│   │   │   ├── submission.routes.js                       // ĐÃ CÓ 
 │   │   │   ├── user.routes.js                             // ĐÃ CÓ
-│   │   │   ├── clo.routes.js                              // CHƯA CÓ
-│   │   │   ├── lesson.routes.js                           // CHƯA CÓ
-│   │   │   ├── assignment.routes.js                       // CHƯA CÓ
-│   │   │   ├── submission.routes.js                       // CHƯA CÓ
-│   │   │   ├── grade.routes.js                            // CHƯA CÓ
-│   │   │   ├── feedback.routes.js                         // CHƯA CÓ
-│   │   │   ├── notification.routes.js                     // CHƯA CÓ
-│   │   │   └── ai.routes.js                               // CHƯA CÓ
+│   │   │   └── notification.routes.js                     // CHƯA CÓ
 │   │   │
 │   │   ├── services/
 │   │   │   ├── auth.service.js                            // ĐÃ CÓ
 │   │   │   ├── class.service.js                           // ĐÃ CÓ
 │   │   │   ├── dashboard.service.js                       // ĐÃ CÓ
-│   │   │   ├── setting.service.js                         // ĐÃ CÓ - file thêm cho admin setting
+│   │   │   ├── setting.service.js                         // ĐÃ CÓ
 │   │   │   ├── subject.service.js                         // ĐÃ CÓ
 │   │   │   ├── user.service.js                            // ĐÃ CÓ
-│   │   │   ├── clo.service.js                             // CHƯA CÓ
-│   │   │   ├── lesson.service.js                          // CHƯA CÓ
-│   │   │   ├── assignment.service.js                      // CHƯA CÓ
-│   │   │   ├── submission.service.js                      // CHƯA CÓ
-│   │   │   ├── grade.service.js                           // CHƯA CÓ
-│   │   │   ├── feedback.service.js                        // CHƯA CÓ
-│   │   │   ├── notification.service.js                    // CHƯA CÓ
-│   │   │   └── ai.service.js                              // CHƯA CÓ
+│   │   │   ├── ai.service.js                              // ĐÃ CÓ
+│   │   │   ├── assignment.service.js                      // ĐÃ CÓ
+│   │   │   ├── clo.service.js                             // ĐÃ CÓ
+│   │   │   ├── feedback.service.js                        // ĐÃ CÓ
+│   │   │   ├── grade.service.js                           // ĐÃ CÓ
+│   │   │   ├── lesson.service.js                          // ĐÃ CÓ
+│   │   │   ├── quiz.service.js                            // ĐÃ CÓ
+│   │   │   ├── report.service.js                          // ĐÃ CÓ
+│   │   │   ├── submission.service.js                      // ĐÃ CÓ
+│   │   │   └── notification.service.js                    // CHƯA CÓ
 │   │   │
 │   │   ├── utils/
 │   │   │   ├── bcrypt.js                                  // ĐÃ CÓ
@@ -92,17 +98,21 @@ AI TEACHING ASSISTANT/
 │   │   │   └── constants.js                               // CHƯA CÓ
 │   │   │
 │   │   ├── validations/
+│   │   │   ├── assignment.validation.js                   // ĐÃ CÓ 
+│   │   │   ├── clo.validation.js                          // ĐÃ CÓ 
+│   │   │   ├── lesson.validation.js                       // ĐÃ CÓ 
 │   │   │   ├── setting.validation.js                      // ĐÃ CÓ
 │   │   │   ├── subject.validation.js                      // ĐÃ CÓ
 │   │   │   ├── user.validation.js                         // ĐÃ CÓ
 │   │   │   ├── auth.validation.js                         // CHƯA CÓ
 │   │   │   ├── class.validation.js                        // CHƯA CÓ
-│   │   │   ├── clo.validation.js                          // CHƯA CÓ
-│   │   │   ├── lesson.validation.js                       // CHƯA CÓ
-│   │   │   ├── assignment.validation.js                   // CHƯA CÓ
 │   │   │   ├── submission.validation.js                   // CHƯA CÓ
 │   │   │   ├── grade.validation.js                        // CHƯA CÓ
-│   │   │   ├── dashboard.validation.js                    // CHƯA CÓ - nên thêm nếu dashboard có query/filter
+│   │   │   ├── feedback.validation.js                     // CHƯA CÓ
+│   │   │   ├── quiz.validation.js                         // CHƯA CÓ
+│   │   │   ├── report.validation.js                       // CHƯA CÓ
+│   │   │   ├── dashboard.validation.js                    // CHƯA CÓ
+│   │   │   ├── notification.validation.js                 // CHƯA CÓ
 │   │   │   └── ai.validation.js                           // CHƯA CÓ
 │   │   │
 │   │   ├── uploads/                                       // CHƯA CÓ

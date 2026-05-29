@@ -251,6 +251,181 @@ const removeLecturerFromSubject = async (subjectId, lecturerId) => {
   return { subjectId, lecturerId };
 };
 
+const getLecturerSubjects = async ({ page, limit, skip, search, lecturerId }) => {
+  const where = {
+    lecturerSubjects: {
+      some: { lecturerId },
+    },
+  };
+
+  if (search) {
+    where.OR = [
+      { code: { contains: search, mode: "insensitive" } },
+      { name: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  const [subjects, total] = await Promise.all([
+    prisma.subject.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { code: "asc" },
+    }),
+    prisma.subject.count({ where }),
+  ]);
+
+  return formatPaginatedResponse(subjects, total, page, limit, "subjects");
+};
+
+const getLecturerSubjectById = async (id, lecturerId) => {
+  const subject = await prisma.subject.findFirst({
+    where: {
+      id,
+      lecturerSubjects: {
+        some: { lecturerId },
+      },
+    },
+  });
+
+  if (!subject) {
+    const error = new Error("Subject not found or access denied");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return subject;
+};
+
+const getClassesOfLecturerSubject = async (subjectId, lecturerId) => {
+  const subjectAssigned = await prisma.lecturerSubject.findUnique({
+    where: {
+      lecturerId_subjectId: {
+        lecturerId,
+        subjectId,
+      },
+    },
+  });
+
+  if (!subjectAssigned) {
+    const error = new Error("Subject access denied or not assigned");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const classSubjects = await prisma.classSubject.findMany({
+    where: {
+      subjectId,
+      class: {
+        lecturerId,
+      },
+    },
+    include: {
+      class: {
+        include: {
+          _count: {
+            select: {
+              enrollments: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { class: { code: "asc" } },
+  });
+
+  return classSubjects.map((cs) => {
+    const { _count, ...rest } = cs.class;
+    return {
+      ...rest,
+      studentCount: _count.enrollments,
+    };
+  });
+};
+
+const getLessonsOfLecturerSubject = async (subjectId, lecturerId) => {
+  const subjectAssigned = await prisma.lecturerSubject.findUnique({
+    where: {
+      lecturerId_subjectId: {
+        lecturerId,
+        subjectId,
+      },
+    },
+  });
+
+  if (!subjectAssigned) {
+    const error = new Error("Subject access denied or not assigned");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const lessons = await prisma.lesson.findMany({
+    where: { subjectId },
+    include: {
+      clo: {
+        select: {
+          id: true,
+          code: true,
+          description: true,
+        },
+      },
+    },
+    orderBy: { chapter: "asc" },
+  });
+
+  return lessons;
+};
+
+const getAssignmentsOfLecturerSubject = async (subjectId, lecturerId) => {
+  const subjectAssigned = await prisma.lecturerSubject.findUnique({
+    where: {
+      lecturerId_subjectId: {
+        lecturerId,
+        subjectId,
+      },
+    },
+  });
+
+  if (!subjectAssigned) {
+    const error = new Error("Subject access denied or not assigned");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const assignments = await prisma.assignment.findMany({
+    where: {
+      subjectId,
+      class: {
+        lecturerId,
+      },
+    },
+    include: {
+      class: {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+        },
+      },
+      lesson: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+      clo: {
+        select: {
+          id: true,
+          code: true,
+        },
+      },
+    },
+    orderBy: { dueDate: "asc" },
+  });
+
+  return assignments;
+};
+
 module.exports = {
   getSubjects,
   getSubjectById,
@@ -260,4 +435,9 @@ module.exports = {
   assignLecturerToSubject,
   getLecturersOfSubject,
   removeLecturerFromSubject,
+  getLecturerSubjects,
+  getLecturerSubjectById,
+  getClassesOfLecturerSubject,
+  getLessonsOfLecturerSubject,
+  getAssignmentsOfLecturerSubject,
 };

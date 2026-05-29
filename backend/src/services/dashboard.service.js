@@ -155,6 +155,169 @@ const getStats = async () => {
   };
 };
 
+const getLecturerStats = async (lecturerId) => {
+  const [
+    totalClasses,
+    totalSubjects,
+    totalLessons,
+    totalAssignments,
+    totalSubmissions,
+    pendingSubmissions,
+    gradedSubmissions,
+    recentSubmissions,
+    recentAssignments,
+  ] = await Promise.all([
+    prisma.class.count({
+      where: { lecturerId },
+    }),
+    prisma.subject.count({
+      where: {
+        lecturerSubjects: {
+          some: { lecturerId },
+        },
+      },
+    }),
+    prisma.lesson.count({
+      where: {
+        OR: [
+          { createdById: lecturerId },
+          {
+            subject: {
+              lecturerSubjects: {
+                some: { lecturerId },
+              },
+            },
+          },
+        ],
+      },
+    }),
+    prisma.assignment.count({
+      where: {
+        OR: [
+          { createdById: lecturerId },
+          { class: { lecturerId } },
+        ],
+      },
+    }),
+    prisma.submission.count({
+      where: {
+        assignment: {
+          OR: [
+            { createdById: lecturerId },
+            { class: { lecturerId } },
+          ],
+        },
+      },
+    }),
+    prisma.submission.count({
+      where: {
+        status: { in: ["SUBMITTED", "LATE"] },
+        assignment: {
+          OR: [
+            { createdById: lecturerId },
+            { class: { lecturerId } },
+          ],
+        },
+      },
+    }),
+    prisma.submission.count({
+      where: {
+        status: "GRADED",
+        assignment: {
+          OR: [
+            { createdById: lecturerId },
+            { class: { lecturerId } },
+          ],
+        },
+      },
+    }),
+    prisma.submission.findMany({
+      take: 5,
+      orderBy: { submittedAt: "desc" },
+      where: {
+        assignment: {
+          OR: [
+            { createdById: lecturerId },
+            { class: { lecturerId } },
+          ],
+        },
+      },
+      include: {
+        student: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+          },
+        },
+        assignment: {
+          select: {
+            id: true,
+            title: true,
+            totalScore: true,
+            class: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.assignment.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      where: {
+        OR: [
+          { createdById: lecturerId },
+          { class: { lecturerId } },
+        ],
+      },
+      include: {
+        class: {
+          select: {
+            name: true,
+          },
+        },
+        subject: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    totalClasses,
+    totalSubjects,
+    totalLessons,
+    totalAssignments,
+    totalSubmissions,
+    pendingSubmissions,
+    gradedSubmissions,
+    recentSubmissions: recentSubmissions.map((s) => ({
+      id: s.id,
+      studentName: s.student.fullName,
+      studentEmail: s.student.email,
+      assignmentTitle: s.assignment.title,
+      className: s.assignment.class.name,
+      status: s.status,
+      submittedAt: s.submittedAt,
+    })),
+    recentAssignments: recentAssignments.map((a) => ({
+      id: a.id,
+      title: a.title,
+      className: a.class.name,
+      subjectName: a.subject.name,
+      dueDate: a.dueDate,
+      status: a.status,
+      createdAt: a.createdAt,
+    })),
+  };
+};
+
 module.exports = {
   getStats,
+  getLecturerStats,
 };

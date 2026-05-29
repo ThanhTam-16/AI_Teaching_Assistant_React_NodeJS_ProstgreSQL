@@ -97,6 +97,74 @@ const removeLecturer = async (req, res, next) => {
   }
 };
 
+const getLecturerSubjects = async (req, res, next) => {
+  try {
+    const { page, limit, skip } = getPaginationParams(req.query);
+    const { search } = req.query;
+    const lecturerId = req.user.id;
+
+    const result = await subjectService.getLecturerSubjects({
+      page,
+      limit,
+      skip,
+      search,
+      lecturerId,
+    });
+
+    return successResponse(res, "Lecturer subjects fetched successfully", result, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getLecturerSubjectById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const lecturerId = req.user.id;
+    const subject = await subjectService.getLecturerSubjectById(id, lecturerId);
+
+    return successResponse(res, "Lecturer subject fetched successfully", subject, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getClassesOfLecturerSubject = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const lecturerId = req.user.id;
+    const classes = await subjectService.getClassesOfLecturerSubject(id, lecturerId);
+
+    return successResponse(res, "Subject classes fetched successfully", classes, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getLessonsOfLecturerSubject = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const lecturerId = req.user.id;
+    const lessons = await subjectService.getLessonsOfLecturerSubject(id, lecturerId);
+
+    return successResponse(res, "Subject lessons fetched successfully", lessons, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAssignmentsOfLecturerSubject = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const lecturerId = req.user.id;
+    const assignments = await subjectService.getAssignmentsOfLecturerSubject(id, lecturerId);
+
+    return successResponse(res, "Subject assignments fetched successfully", assignments, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getSubjects,
   getSubjectById,
@@ -106,4 +174,9 @@ module.exports = {
   assignLecturer,
   getLecturers,
   removeLecturer,
+  getLecturerSubjects,
+  getLecturerSubjectById,
+  getClassesOfLecturerSubject,
+  getLessonsOfLecturerSubject,
+  getAssignmentsOfLecturerSubject,
 };
