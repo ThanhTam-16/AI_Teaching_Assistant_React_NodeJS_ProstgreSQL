@@ -6,6 +6,7 @@ pnpm-lock.yaml
 
 # Env files
 .env
+.env.production
 **/.env
 !*.env.example
 
