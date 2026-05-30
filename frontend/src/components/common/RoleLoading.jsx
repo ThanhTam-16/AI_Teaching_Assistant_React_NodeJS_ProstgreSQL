@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useTheme } from '../../contexts/ThemeContext'
 
 // ── Role configs ──────────────────────────────────────────────────────────────
 const ROLE_CONFIG = {
@@ -44,6 +45,7 @@ const ROLE_CONFIG = {
 }
 
 export default function RoleLoading({ role = 'ADMIN' }) {
+  const { dark } = useTheme()
   const cfg = ROLE_CONFIG[role] ?? ROLE_CONFIG.ADMIN
   const [dots, setDots] = useState(0)
 
@@ -52,9 +54,22 @@ export default function RoleLoading({ role = 'ADMIN' }) {
     return () => clearInterval(t)
   }, [])
 
+  const bgGradient = dark
+    ? `radial-gradient(ellipse, ${cfg.glow} 0%, transparent 70%)`
+    : `radial-gradient(ellipse, ${cfg.glow.replace('0.3', '0.12')} 0%, transparent 70%)`
+
+  const centerBg = dark
+    ? `linear-gradient(135deg, ${cfg.primary}20, ${cfg.secondary}10)`
+    : `linear-gradient(135deg, ${cfg.primary}15, ${cfg.secondary}05)`
+
+  const centerBorder = `1px solid ${dark ? cfg.primary + '40' : cfg.primary + '20'}`
+  const centerGlow = dark
+    ? `0 0 32px ${cfg.glow}, inset 0 1px 0 ${cfg.primary}20`
+    : `0 0 16px ${cfg.glow.replace('0.3', '0.15')}, inset 0 1px 0 ${cfg.primary}10`
+
   return (
     <div
-      style={{ background: '#0a0a0f' }}
+      style={{ background: dark ? '#0a0a0f' : '#f9fafb' }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
     >
       {/* Ambient glow bg */}
@@ -63,7 +78,7 @@ export default function RoleLoading({ role = 'ADMIN' }) {
           position: 'absolute', top: '30%', left: '50%',
           transform: 'translate(-50%, -50%)',
           width: 400, height: 400, borderRadius: '50%',
-          background: `radial-gradient(ellipse, ${cfg.glow} 0%, transparent 70%)`,
+          background: bgGradient,
           filter: 'blur(40px)',
           animation: 'pulse-glow 2.5s ease-in-out infinite',
         }}
@@ -78,7 +93,7 @@ export default function RoleLoading({ role = 'ADMIN' }) {
             width: 80 + i * 70,
             height: 80 + i * 70,
             borderRadius: '50%',
-            border: `1px solid ${cfg.ring}`,
+            border: `1px solid ${dark ? cfg.ring : cfg.ring.replace('0.15', '0.08')}`,
             animation: `spin-ring ${4 + i * 2}s linear infinite`,
             animationDirection: i % 2 === 0 ? 'reverse' : 'normal',
             opacity: 0.6 - i * 0.15,
@@ -101,11 +116,11 @@ export default function RoleLoading({ role = 'ADMIN' }) {
       <div
         style={{
           width: 72, height: 72, borderRadius: 20,
-          background: `linear-gradient(135deg, ${cfg.primary}20, ${cfg.secondary}10)`,
-          border: `1px solid ${cfg.primary}40`,
+          background: centerBg,
+          border: centerBorder,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: cfg.primary,
-          boxShadow: `0 0 32px ${cfg.glow}, inset 0 1px 0 ${cfg.primary}20`,
+          boxShadow: centerGlow,
           animation: 'float-icon 3s ease-in-out infinite',
           marginBottom: 32,
           zIndex: 1,
@@ -118,13 +133,13 @@ export default function RoleLoading({ role = 'ADMIN' }) {
       <div style={{ textAlign: 'center', zIndex: 1 }}>
         <div
           style={{
-            fontSize: 18, fontWeight: 700, color: '#fff',
+            fontSize: 18, fontWeight: 700, color: dark ? '#fff' : '#111827',
             letterSpacing: '0.02em', marginBottom: 6,
           }}
         >
           {cfg.label}
         </div>
-        <div style={{ fontSize: 12, color: '#6b7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div style={{ fontSize: 12, color: dark ? '#6b7280' : '#4b5563', display: 'flex', alignItems: 'center', gap: 4 }}>
           <span>{cfg.sub.replace('...', '')}</span>
           <span style={{ color: cfg.primary, fontWeight: 700, minWidth: 18 }}>
             {'.'.repeat(dots + 1)}

@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import { ThemeProvider } from '../../../contexts/ThemeContext'
 import AdminSidebar from '../components/AdminSidebar'
 import AdminHeader  from '../components/AdminHeader'
 
@@ -19,7 +18,7 @@ function AdminLayoutInner() {
       />
 
       {/* Main — expands to fill when sidebar collapsed */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden transition-all duration-200">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden transition-all duration-300">
         <AdminHeader onMobileMenuOpen={() => setMobileOpen(true)} />
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-5">
           <Outlet />
@@ -30,9 +29,5 @@ function AdminLayoutInner() {
 }
 
 export default function AdminLayout() {
-  return (
-    <ThemeProvider>
-      <AdminLayoutInner />
-    </ThemeProvider>
-  )
+  return <AdminLayoutInner />
 }

@@ -7,6 +7,7 @@ import {
 import { getUsers, createUser, updateUser, deleteUser, toggleUserStatus } from '../../../services/user.api'
 import { formatDate } from '../../../utils/formatDate'
 import PageHeader from '../../../components/common/PageHeader'
+import PortalDropdown from '../../../components/common/PortalDropdown'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const ROLE_LABELS  = { ADMIN: 'Admin', LECTURER: 'Giảng viên', STUDENT: 'Sinh viên' }
@@ -37,33 +38,19 @@ function Badge({ style, label }) {
 }
 
 function ActionMenu({ user, onEdit, onDelete, onToggleStatus }) {
-  const [open, setOpen] = useState(false)
   return (
-    <div className="relative" onClick={(e) => e.stopPropagation()}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="w-6 h-6 rounded-md flex items-center justify-center dark:text-gray-500 text-gray-400 dark:hover:text-gray-200 hover:text-gray-700 dark:hover:bg-gray-700 hover:bg-gray-100 transition-all"
-      >
-        <MoreHorizontal size={13} />
+    <PortalDropdown width="w-38">
+      <button onClick={() => onEdit(user)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:text-gray-300 text-gray-600 dark:hover:bg-gray-800 hover:bg-gray-50 transition-all">
+        <Pencil size={11} /> Chỉnh sửa
       </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 w-38 dark:bg-gray-900 bg-white border dark:border-gray-800 border-gray-200 rounded-xl shadow-2xl py-1 z-20">
-            <button onClick={() => { onEdit(user); setOpen(false) }} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:text-gray-300 text-gray-600 dark:hover:bg-gray-800 hover:bg-gray-50 transition-all">
-              <Pencil size={11} /> Chỉnh sửa
-            </button>
-            <button onClick={() => { onToggleStatus(user); setOpen(false) }} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:text-gray-300 text-gray-600 dark:hover:bg-gray-800 hover:bg-gray-50 transition-all">
-              {user.status === 'ACTIVE' ? <><ToggleLeft size={11} /> Khoá</> : <><ToggleRight size={11} /> Mở khoá</>}
-            </button>
-            <div className="dark:border-gray-800 border-gray-100 border-t my-0.5" />
-            <button onClick={() => { onDelete(user); setOpen(false) }} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-rose-400 dark:hover:bg-rose-500/5 hover:bg-rose-50 transition-all">
-              <Trash2 size={11} /> Xoá
-            </button>
-          </div>
-        </>
-      )}
-    </div>
+      <button onClick={() => onToggleStatus(user)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:text-gray-300 text-gray-600 dark:hover:bg-gray-800 hover:bg-gray-50 transition-all">
+        {user.status === 'ACTIVE' ? <><ToggleLeft size={11} /> Khoá</> : <><ToggleRight size={11} /> Mở khoá</>}
+      </button>
+      <div className="dark:border-gray-800 border-gray-100 border-t my-0.5" />
+      <button onClick={() => onDelete(user)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-rose-400 dark:hover:bg-rose-500/5 hover:bg-rose-50 transition-all">
+        <Trash2 size={11} /> Xoá
+      </button>
+    </PortalDropdown>
   )
 }
 
@@ -318,7 +305,13 @@ export default function UserManagementPage({ fixedRole, pageTitle = 'Tất cả 
                         <div className="w-7 h-7 rounded-full dark:bg-gray-800 bg-gray-100 flex items-center justify-center flex-shrink-0 border dark:border-gray-700 border-gray-200">
                           <span className="text-[10px] font-bold dark:text-gray-300 text-gray-500">{u.name?.[0]?.toUpperCase() ?? '?'}</span>
                         </div>
-                        <span className="text-xs font-medium dark:text-gray-200 text-gray-700">{u.name}</span>
+                        <span
+                          onClick={() => { setModal({ type:'edit', user:u }); setModalErr('') }}
+                          className="text-xs font-medium dark:text-gray-200 text-gray-700 hover:text-orange-500 dark:hover:text-orange-400 hover:underline cursor-pointer transition-colors"
+                          title="Bấm để chỉnh sửa"
+                        >
+                          {u.name}
+                        </span>
                       </div>
                     </td>
                     <td className="px-4 py-2.5"><span className="text-xs dark:text-gray-400 text-gray-500">{u.email}</span></td>

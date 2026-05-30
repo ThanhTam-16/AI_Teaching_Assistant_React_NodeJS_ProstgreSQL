@@ -1,190 +1,216 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../../hooks/useAuth'
+import React, { useEffect, useState } from 'react'
 import {
-  BookOpen, Users, FileText, BarChart3,
-  Sparkles, Bell, LogOut, ChevronRight,
-  GraduationCap, ClipboardList, Star
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
+} from 'recharts'
+import {
+  GraduationCap, BookOpen, FileText, ClipboardList,
+  Inbox, CheckCircle2, Clock, Sparkles,
 } from 'lucide-react'
+import { getLecturerDashboard } from '../../../services/dashboard.api'
+import LecturerStatCard from '../components/LecturerStatCard'
+import { PageHeader, Sk } from '../components/LecturerUI'
+import { useTheme } from '../../../contexts/ThemeContext'
+import { formatRelative } from '../../../utils/formatDate'
 
-// ── Stat card ─────────────────────────────────────────────────────────────────
-function StatCard({ icon, label, value, sub, color }) {
-  const colors = {
-    green:  { bg: 'bg-lecturer-50',  icon: 'bg-lecturer-100 text-lecturer-600', val: 'text-lecturer-700' },
-    orange: { bg: 'bg-fpt-pastel',   icon: 'bg-fpt-pale text-fpt-orange',       val: 'text-fpt-orange'   },
-    teal:   { bg: 'bg-cyan-50',      icon: 'bg-cyan-100 text-cyan-600',          val: 'text-cyan-700'     },
-    purple: { bg: 'bg-purple-50',    icon: 'bg-purple-100 text-purple-600',      val: 'text-purple-700'   },
-  }
-  const c = colors[color] || colors.green
+// Mock data — replace with API fields when backend returns them
+const MOCK_SUBMISSION_TREND = [
+  { week: 'T1', submitted: 8,  graded: 5  },
+  { week: 'T2', submitted: 15, graded: 12 },
+  { week: 'T3', submitted: 10, graded: 10 },
+  { week: 'T4', submitted: 22, graded: 18 },
+  { week: 'T5', submitted: 17, graded: 14 },
+  { week: 'T6', submitted: 25, graded: 20 },
+]
+
+const MOCK_STATUS_PIE = [
+  { name: 'Đã chấm',   value: 45, color: '#34D399' },
+  { name: 'Chờ chấm',  value: 18, color: '#3B9EE8' },
+  { name: 'Quá hạn',   value: 7,  color: '#FB7185' },
+]
+
+function ChartCard({ title, children }) {
   return (
-    <div className={`${c.bg} rounded-2xl border border-white p-5 flex items-start gap-4 shadow-card`}>
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${c.icon}`}>
-        {icon}
+    <div className="dark:bg-[#161B22]/60 bg-white border dark:border-[#21262D] border-blue-100/80 rounded-xl p-4">
+      <h3 className="text-xs font-bold dark:text-gray-300 text-gray-700 mb-4">{title}</h3>
+      {children}
+    </div>
+  )
+}
+
+function CustomTooltip({ active, payload, label, dark }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className={`px-3 py-2 rounded-lg border text-xs shadow-xl ${dark ? 'bg-[#161B22] border-[#21262D] text-gray-200' : 'bg-white border-gray-200 text-gray-700'}`}>
+      <div className="font-semibold mb-1">{label}</div>
+      {payload.map((p) => (
+        <div key={p.name} className="flex items-center gap-2">
+          <span style={{ color: p.color }}>●</span>
+          {p.name}: <span className="font-bold">{p.value}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function RecentRow({ name, sub, badge, time, color = 'text-blue-400' }) {
+  return (
+    <div className="flex items-center gap-2.5 py-2 border-b dark:border-[#21262D]/60 border-gray-100 last:border-0">
+      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${color}`} style={{ background: 'currentColor' }} />
+      <div className="flex-1 min-w-0">
+        <div className="text-xs font-medium dark:text-gray-200 text-gray-700 truncate">{name}</div>
+        {sub && <div className="text-[10px] dark:text-gray-500 text-gray-400 truncate">{sub}</div>}
       </div>
-      <div>
-        <div className={`font-display font-bold text-2xl ${c.val}`}>{value}</div>
-        <div className="text-xs font-semibold text-gray-700 mt-0.5">{label}</div>
-        {sub && <div className="text-[11px] text-gray-400 mt-0.5">{sub}</div>}
+      <div className="flex items-center gap-1.5">
+        {badge && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">{badge}</span>}
+        <span className="text-[10px] dark:text-gray-600 text-gray-400 flex-shrink-0 flex items-center gap-1"><Clock size={9} />{formatRelative(time)}</span>
       </div>
     </div>
   )
 }
 
-// ── Quick action button ───────────────────────────────────────────────────────
-function QuickAction({ icon, label, desc, soon }) {
-  return (
-    <button
-      disabled={soon}
-      className="group relative flex items-center gap-3 bg-white border border-lecturer-100 rounded-2xl px-4 py-3.5 text-left hover:border-lecturer-300 hover:shadow-green-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-default w-full"
-    >
-      <div className="w-9 h-9 rounded-xl bg-lecturer-50 flex items-center justify-center flex-shrink-0 group-hover:bg-lecturer-100 transition-colors text-lecturer-600">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-gray-800">{label}</div>
-        <div className="text-xs text-gray-400">{desc}</div>
-      </div>
-      {soon
-        ? <span className="text-[10px] font-bold bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">Sắp có</span>
-        : <ChevronRight size={14} className="text-gray-300 group-hover:text-lecturer-500 transition-colors" />
-      }
-    </button>
-  )
-}
-
-// ── Main ──────────────────────────────────────────────────────────────────────
 export default function LecturerOverviewPage() {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const { dark } = useTheme()
+  const grid = dark ? '#21262D' : '#e0f0ff'
+  const axis = dark ? '#6E7681' : '#93c5fd'
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/', { replace: true })
-  }
+  useEffect(() => {
+    getLecturerDashboard()
+      .then(r => setData(r.data.data))
+      .catch(() => setData(null))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const s = data?.stats ?? {}
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-lecturer-50 via-white to-fpt-pastel">
-
-      {/* ── Header ────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-lecturer-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          {/* Brand */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-green-gradient flex items-center justify-center">
-              <Sparkles size={14} className="text-white" />
+    <div className="space-y-4 max-w-screen-2xl">
+      {/* Welcome banner */}
+      <div className="relative rounded-2xl overflow-hidden border dark:border-[#21262D] border-blue-100 p-5"
+        style={{ background: dark ? 'linear-gradient(135deg, #0D1117 0%, #161B22 50%, #0c1929 100%)' : 'linear-gradient(135deg, #EFF8FF 0%, #DBEAFE 50%, #E0F2FE 100%)' }}>
+        <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-20 blur-3xl"
+          style={{ background: 'radial-gradient(circle, #3B9EE8, transparent)' }} />
+        <div className="relative z-10 flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles size={13} className="text-blue-400" />
+              <span className="text-[10px] text-blue-400 font-semibold uppercase tracking-widest">Lecturer Portal</span>
             </div>
-            <div>
-              <span className="font-display font-bold text-lecturer-600 text-sm">AITA</span>
-              <span className="hidden sm:inline text-gray-400 text-xs ml-1.5">· Giảng viên</span>
-            </div>
+            <h2 className="text-base font-bold dark:text-white text-gray-900 mb-1">Xin chào, Giảng viên! 👋</h2>
+            <p className="text-xs dark:text-gray-400 text-blue-700">Quản lý lớp học và tạo nội dung giảng dạy với AI.</p>
           </div>
-
-          {/* User + actions */}
           <div className="flex items-center gap-2">
-            <button className="relative p-2 text-gray-400 hover:text-lecturer-600 hover:bg-lecturer-50 rounded-lg transition-all">
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-fpt-orange rounded-full" />
-            </button>
+            <div className="px-3 py-1.5 bg-blue-500/10 border border-blue-400/20 rounded-lg">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse inline-block mr-1.5" />
+              <span className="text-xs font-medium text-blue-400">AI sẵn sàng</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-lecturer-50 rounded-xl border border-lecturer-100">
-              <div className="w-6 h-6 rounded-full bg-green-gradient flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-                {user?.fullName?.[0] || 'G'}
+      <PageHeader
+        title="Tổng quan"
+        description="Thống kê hoạt động giảng dạy"
+        stats={[
+          { label: 'Bài nộp chờ', value: s.pendingSubmissions ?? '—', color: 'text-blue-500' },
+          { label: 'Đã chấm', value: s.gradedSubmissions ?? '—', color: 'text-emerald-500' },
+        ]}
+      />
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        <LecturerStatCard icon={GraduationCap} label="Lớp học"    value={loading ? null : (s.totalClasses    ?? 6)}  sub="đang phụ trách"  accent="blue"   loading={loading} />
+        <LecturerStatCard icon={BookOpen}      label="Môn học"    value={loading ? null : (s.totalSubjects   ?? 3)}  sub="được phân công"  accent="sky"    loading={loading} />
+        <LecturerStatCard icon={FileText}      label="Bài học"    value={loading ? null : (s.totalLessons    ?? 24)} sub="đã tạo"          accent="violet" loading={loading} />
+        <LecturerStatCard icon={ClipboardList} label="Bài tập"    value={loading ? null : (s.totalAssignments ?? 18)} sub="đã giao"        accent="orange" loading={loading} />
+      </div>
+      <div className="grid grid-cols-2 xl:grid-cols-2 gap-3">
+        <LecturerStatCard icon={Inbox}         label="Chờ chấm"   value={loading ? null : (s.pendingSubmissions ?? 7)} sub="bài nộp"       accent="amber"  loading={loading} />
+        <LecturerStatCard icon={CheckCircle2}  label="Đã chấm"    value={loading ? null : (s.gradedSubmissions ?? 45)} sub="bài nộp"      accent="green"  loading={loading} />
+      </div>
+
+      {/* Charts */}
+      <div className="grid lg:grid-cols-3 gap-3">
+        <ChartCard title="Xu hướng nộp & chấm bài (6 tuần)" >
+          <ResponsiveContainer width="100%" height={150}>
+            <AreaChart data={data?.submissionTrend ?? MOCK_SUBMISSION_TREND} margin={{ top:4, right:4, left:-28, bottom:0 }}>
+              <defs>
+                <linearGradient id="gSub" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#3B9EE8" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#3B9EE8" stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="gGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#34D399" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#34D399" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={grid} />
+              <XAxis dataKey="week" tick={{ fontSize:10, fill:axis }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize:10, fill:axis }} axisLine={false} tickLine={false} />
+              <Tooltip content={<CustomTooltip dark={dark} />} />
+              <Area type="monotone" dataKey="submitted" name="Nộp" stroke="#3B9EE8" strokeWidth={1.5} fill="url(#gSub)" dot={false} />
+              <Area type="monotone" dataKey="graded"    name="Chấm" stroke="#34D399" strokeWidth={1.5} fill="url(#gGrad)" dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+          <div className="flex gap-4 mt-2">
+            {[{c:'#3B9EE8',l:'Nộp bài'},{c:'#34D399',l:'Đã chấm'}].map(x => (
+              <div key={x.l} className="flex items-center gap-1.5"><span className="w-3 h-0.5 rounded" style={{background:x.c}} /><span className="text-[10px] dark:text-gray-500 text-gray-400">{x.l}</span></div>
+            ))}
+          </div>
+        </ChartCard>
+
+        {/* Pie */}
+        <ChartCard title="Trạng thái bài nộp">
+          <ResponsiveContainer width="100%" height={150}>
+            <PieChart>
+              <Pie data={data?.submissionStatus ?? MOCK_STATUS_PIE} cx="50%" cy="50%" innerRadius={38} outerRadius={58} paddingAngle={3} dataKey="value">
+                {(data?.submissionStatus ?? MOCK_STATUS_PIE).map((e, i) => (
+                  <Cell key={i} fill={e.color} stroke="transparent" />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip dark={dark} />} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="flex flex-col gap-1.5 mt-1">
+            {(data?.submissionStatus ?? MOCK_STATUS_PIE).map(r => (
+              <div key={r.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{background:r.color}} /><span className="text-[10px] dark:text-gray-400 text-gray-500">{r.name}</span></div>
+                <span className="text-[10px] font-bold dark:text-gray-300 text-gray-600">{r.value}</span>
               </div>
-              <span className="text-xs font-semibold text-gray-700 max-w-[120px] truncate">{user?.fullName}</span>
-            </div>
-
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-500 border border-gray-200 rounded-xl hover:border-red-200 hover:text-red-500 hover:bg-red-50 transition-all"
-            >
-              <LogOut size={13} />
-              <span className="hidden sm:inline">Đăng xuất</span>
-            </button>
+            ))}
           </div>
-        </div>
-      </header>
+        </ChartCard>
 
-      {/* ── Main content ──────────────────────────────────────────── */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        {/* Recent assignments */}
+        <ChartCard title="Bài tập gần đây">
+          {loading ? (
+            <div className="space-y-2">{[1,2,3,4].map(i => <Sk key={i} className="h-8 w-full rounded-lg" />)}</div>
+          ) : (data?.recentAssignments ?? []).length === 0 ? (
+            <p className="text-xs dark:text-gray-600 text-gray-400 text-center py-6">Chưa có bài tập.</p>
+          ) : (
+            (data?.recentAssignments ?? []).map((a, i) => (
+              <RecentRow key={i} name={a.title} sub={a.className} badge={a.status} time={a.createdAt} color="text-blue-400" />
+            ))
+          )}
+          <a href="/lecturer/assignments" className="block text-center text-[10px] text-blue-400 hover:text-blue-300 mt-3">Xem tất cả →</a>
+        </ChartCard>
+      </div>
 
-        {/* Welcome */}
-        <div className="mb-8 animate-fade-up">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-lecturer-100 rounded-full mb-3">
-            <GraduationCap size={13} className="text-lecturer-600" />
-            <span className="text-xs font-bold text-lecturer-700 uppercase tracking-wide">Giảng viên</span>
-          </div>
-          <h1 className="font-display font-bold text-2xl text-gray-900 mb-1">
-            Xin chào, <span className="text-lecturer-600">{user?.fullName || 'Giảng viên'}</span> 👋
-          </h1>
-          <p className="text-gray-500 text-sm">{user?.email} · Học kỳ Summer 2026</p>
-        </div>
-
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
-          <StatCard icon={<BookOpen size={18}/>}      label="Lớp học"       value="3"  sub="Đang hoạt động" color="green"  />
-          <StatCard icon={<Users size={18}/>}         label="Sinh viên"     value="72" sub="Tổng 3 lớp"      color="orange" />
-          <StatCard icon={<FileText size={18}/>}      label="Bài tập"       value="12" sub="Đã tạo"           color="teal"   />
-          <StatCard icon={<BarChart3 size={18}/>}     label="Bài nộp"       value="48" sub="Chờ chấm điểm"   color="purple" />
-        </div>
-
-        {/* Two-column layout */}
-        <div className="grid lg:grid-cols-5 gap-6">
-
-          {/* Quick actions — 3 cols */}
-          <div className="lg:col-span-3 animate-fade-up" style={{ animationDelay: '0.15s' }}>
-            <h2 className="font-display font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2">
-              <Sparkles size={14} className="text-fpt-orange" /> Công cụ AI
-            </h2>
-            <div className="space-y-2.5">
-              <QuickAction icon={<span className="text-base">🎨</span>} label="Tạo slide từ CLO"        desc="AI tự động tạo nội dung bài giảng" soon />
-              <QuickAction icon={<span className="text-base">📝</span>} label="Tạo bài tập"             desc="Bài tập theo chủ đề và độ khó"    soon />
-              <QuickAction icon={<span className="text-base">💻</span>} label="Phân tích code sinh viên" desc="Đánh giá chất lượng và logic"      soon />
-              <QuickAction icon={<span className="text-base">🧠</span>} label="Phản hồi học tập AI"     desc="Gợi ý cá nhân hoá cho sinh viên"   soon />
-            </div>
-
-            <h2 className="font-display font-semibold text-gray-800 text-sm mt-6 mb-3 flex items-center gap-2">
-              <ClipboardList size={14} className="text-lecturer-600" /> Quản lý
-            </h2>
-            <div className="space-y-2.5">
-              <QuickAction icon={<BookOpen size={16}/>}   label="Quản lý lớp học"    desc="Xem và quản lý danh sách lớp"   soon />
-              <QuickAction icon={<FileText size={16}/>}   label="Bài nộp của sinh viên" desc="Xem và chấm bài tập đã nộp"  soon />
-              <QuickAction icon={<BarChart3 size={16}/>}  label="Báo cáo & Điểm số"  desc="Tổng hợp kết quả học tập"       soon />
-            </div>
-          </div>
-
-          {/* Activity feed — 2 cols */}
-          <div className="lg:col-span-2 animate-fade-up" style={{ animationDelay: '0.2s' }}>
-            <h2 className="font-display font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2">
-              <Bell size={14} className="text-fpt-orange" /> Hoạt động gần đây
-            </h2>
-            <div className="bg-white rounded-2xl border border-lecturer-100 overflow-hidden">
-              {[
-                { icon: '📥', text: 'Nguyễn Văn A đã nộp bài tập Lab 3',   time: '5 phút trước',   dot: 'bg-green-400'  },
-                { icon: '🤖', text: 'AI đã tạo xong slide Chương 5',        time: '1 giờ trước',    dot: 'bg-fpt-orange' },
-                { icon: '📥', text: 'Trần Thị B đã nộp bài Assignment 2',  time: '2 giờ trước',    dot: 'bg-green-400'  },
-                { icon: '📊', text: 'Báo cáo tuần được tạo tự động',        time: 'Hôm qua',        dot: 'bg-blue-400'   },
-                { icon: '👤', text: 'Sinh viên mới tham gia lớp SE1234',    time: 'Hôm qua',        dot: 'bg-purple-400' },
-              ].map((item, i) => (
-                <div key={i} className={`flex items-start gap-3 px-4 py-3 ${i < 4 ? 'border-b border-gray-50' : ''}`}>
-                  <span className="text-base mt-0.5 flex-shrink-0">{item.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-700 leading-relaxed">{item.text}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{item.time}</p>
-                  </div>
-                  <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${item.dot}`} />
-                </div>
-              ))}
-            </div>
-
-            {/* Coming soon banner */}
-            <div className="mt-4 bg-gradient-to-br from-lecturer-50 to-fpt-pastel rounded-2xl border border-lecturer-100 p-4 text-center">
-              <Star size={18} className="mx-auto text-fpt-orange mb-2" />
-              <p className="text-xs font-semibold text-gray-700 mb-1">Dashboard đầy đủ sắp ra mắt</p>
-              <p className="text-[10px] text-gray-400">Các tính năng quản lý lớp học và AI đang được phát triển.</p>
-            </div>
-          </div>
-        </div>
-      </main>
+      {/* Recent submissions */}
+      <ChartCard title="Bài nộp gần đây">
+        <div className="flex items-center justify-between mb-2"><span /><a href="/lecturer/submissions" className="text-[10px] text-blue-400 hover:text-blue-300">Xem tất cả →</a></div>
+        {loading ? (
+          <div className="space-y-2">{[1,2,3,4,5].map(i=><Sk key={i} className="h-7 w-full rounded" />)}</div>
+        ) : (data?.recentSubmissions ?? []).length === 0 ? (
+          <p className="text-xs dark:text-gray-600 text-gray-400 text-center py-6">Chưa có bài nộp.</p>
+        ) : (
+          (data?.recentSubmissions ?? []).map((s, i) => (
+            <RecentRow key={i} name={s.studentName ?? 'Sinh viên'} sub={s.assignmentTitle} badge={s.status} time={s.submittedAt} />
+          ))
+        )}
+      </ChartCard>
     </div>
   )
 }

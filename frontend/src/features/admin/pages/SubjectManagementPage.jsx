@@ -174,9 +174,23 @@ export default function SubjectManagementPage() {
               ) : subjects.map(s=>(
                 <tr key={s.id} className="border-b dark:border-gray-800/30 border-gray-100 dark:hover:bg-gray-800/20 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-2.5">
-                    <span className="font-mono text-[10px] font-bold text-orange-400 dark:bg-orange-500/10 bg-orange-50 px-2 py-0.5 rounded-md border dark:border-orange-500/20 border-orange-200">{s.code}</span>
+                    <span
+                      onClick={() => { setModal({ type: 'edit', subject: s }); setModalErr('') }}
+                      className="font-mono text-[10px] font-bold text-orange-400 dark:bg-orange-500/10 bg-orange-50 px-2 py-0.5 rounded-md border dark:border-orange-500/20 border-orange-200 hover:bg-orange-500/20 cursor-pointer transition-colors"
+                      title="Bấm để chỉnh sửa"
+                    >
+                      {s.code}
+                    </span>
                   </td>
-                  <td className="px-4 py-2.5 text-xs font-medium dark:text-gray-200 text-gray-700">{s.name}</td>
+                  <td className="px-4 py-2.5">
+                    <span
+                      onClick={() => { setModal({ type: 'edit', subject: s }); setModalErr('') }}
+                      className="text-xs font-medium dark:text-gray-200 text-gray-700 hover:text-orange-500 dark:hover:text-orange-400 hover:underline cursor-pointer transition-colors"
+                      title="Bấm để chỉnh sửa"
+                    >
+                      {s.name}
+                    </span>
+                  </td>
                   <td className="px-4 py-2.5 text-xs dark:text-gray-400 text-gray-500 text-center">{s.credits??'—'}</td>
                   <td className="px-4 py-2.5 max-w-xs"><span className="text-[10px] dark:text-gray-500 text-gray-400 line-clamp-1">{s.description??'—'}</span></td>
                   <td className="px-4 py-2.5 text-[10px] dark:text-gray-500 text-gray-400">{formatDate(s.createdAt)}</td>

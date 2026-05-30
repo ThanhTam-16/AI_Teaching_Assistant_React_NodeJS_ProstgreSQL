@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Bell, Menu } from 'lucide-react'
 
@@ -56,9 +56,9 @@ export default function AdminHeader({ onMobileMenuOpen }) {
         {/* Mobile hamburger */}
         <button
           onClick={onMobileMenuOpen}
-          className="md:hidden w-7 h-7 rounded-lg flex items-center justify-center dark:text-gray-400 text-gray-500 dark:hover:bg-gray-800 hover:bg-gray-100 transition-all"
+          className="md:hidden w-9 h-9 rounded-lg flex items-center justify-center dark:text-gray-200 text-slate-700 dark:hover:bg-gray-800 hover:bg-gray-100 dark:hover:text-white hover:text-slate-900 transition-all"
         >
-          <Menu size={15} />
+          <Menu size={18} />
         </button>
 
         {/* Breadcrumb + title */}

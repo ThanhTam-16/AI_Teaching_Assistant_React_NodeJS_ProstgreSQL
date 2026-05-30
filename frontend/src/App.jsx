@@ -2,9 +2,9 @@ import React from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AuthProvider } from './contexts/AuthContext'
-import ProtectedRoute   from './routes/ProtectedRoute'
-import RoleRoute        from './routes/RoleRoute'
-import { ROLES }        from './utils/constants'
+import ProtectedRoute from './routes/ProtectedRoute'
+import RoleRoute     from './routes/RoleRoute'
+import { ROLES }     from './utils/constants'
 
 // ── Public ────────────────────────────────────────────────────────────────────
 import LandingPage        from './pages/LandingPage'
@@ -14,35 +14,46 @@ import UnauthorizedPage   from './pages/UnauthorizedPage'
 import NotFoundPage       from './pages/NotFoundPage'
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
-import AdminLayout              from './features/admin/layouts/AdminLayout'
-import AdminOverviewPage        from './features/admin/pages/AdminOverviewPage'
-import UserManagementPage       from './features/admin/pages/UserManagementPage'
+import AdminLayout           from './features/admin/layouts/AdminLayout'
+import AdminOverviewPage     from './features/admin/pages/AdminOverviewPage'
+import UserManagementPage    from './features/admin/pages/UserManagementPage'
 import { LecturerManagementPage, StudentManagementPage } from './features/admin/pages/RolePages'
-import SubjectManagementPage    from './features/admin/pages/SubjectManagementPage'
-import AISettingsPage           from './features/admin/pages/AISettingsPage'
-import SystemSettingsPage       from './features/admin/pages/SystemSettingsPage'
+import AdminSubjectPage      from './features/admin/pages/SubjectManagementPage'
+import AISettingsPage        from './features/admin/pages/AISettingsPage'
+import SystemSettingsPage    from './features/admin/pages/SystemSettingsPage'
 
-// ── Lecturer / Student (placeholders — untouched) ─────────────────────────────
-import LecturerOverviewPage from './features/lecturer/pages/LecturerOverviewPage'
-import StudentOverviewPage  from './features/student/pages/StudentOverviewPage'
+// ── Lecturer ──────────────────────────────────────────────────────────────────
+import LecturerLayout           from './features/lecturer/layouts/LecturerLayout'
+import LecturerOverviewPage     from './features/lecturer/pages/LecturerOverviewPage'
+import ClassManagementPage      from './features/lecturer/pages/ClassManagementPage'
+import LecturerSubjectPage      from './features/lecturer/pages/LecturerSubjectPage'
+import CLOManagementPage        from './features/lecturer/pages/CLOManagementPage'
+import LessonManagementPage     from './features/lecturer/pages/LessonManagementPage'
+import AssignmentManagementPage from './features/lecturer/pages/AssignmentManagementPage'
+import { SubmissionManagementPage, GradingPage } from './features/lecturer/pages/SubmissionPages'
+import {
+  AIExerciseGeneratorPage,
+  AIQuizGeneratorPage,
+  AIFeedbackGeneratorPage,
+  AISlideGeneratorPage,
+} from './features/lecturer/pages/ai/AIPages'
+import LecturerReportPage from './features/lecturer/pages/LecturerReportPage'
+
+// ── Student (placeholder) ─────────────────────────────────────────────────────
+import StudentOverviewPage from './features/student/pages/StudentOverviewPage'
+
+import { ThemeProvider } from './contexts/ThemeContext'
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        {/*
-          Sonner Toaster — dark/light auto-detects via theme attr on parent div.
-          For admin pages the ThemeProvider wraps content, so toaster reads
-          system preference here. Admin-scoped dark mode is handled by ThemeProvider.
-        */}
+    <ThemeProvider>
+      <BrowserRouter>
+        <AuthProvider>
         <Toaster
           position="top-right"
           richColors
           closeButton
-          toastOptions={{
-            style: { fontSize: '12px' },
-            duration: 3500,
-          }}
+          toastOptions={{ style: { fontSize: '12px' }, duration: 3500 }}
         />
 
         <Routes>
@@ -52,7 +63,7 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/unauthorized"    element={<UnauthorizedPage />} />
 
-          {/* ── Admin (nested layout with Outlet) ──────────────── */}
+          {/* ── Admin ──────────────────────────────────────────── */}
           <Route
             path="/admin"
             element={
@@ -63,13 +74,13 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route index                element={<AdminOverviewPage />} />
-            <Route path="users"         element={<UserManagementPage />} />
-            <Route path="lecturers"     element={<LecturerManagementPage />} />
-            <Route path="students"      element={<StudentManagementPage />} />
-            <Route path="subjects"      element={<SubjectManagementPage />} />
-            <Route path="ai-settings"   element={<AISettingsPage />} />
-            <Route path="settings"      element={<SystemSettingsPage />} />
+            <Route index              element={<AdminOverviewPage />} />
+            <Route path="users"       element={<UserManagementPage />} />
+            <Route path="lecturers"   element={<LecturerManagementPage />} />
+            <Route path="students"    element={<StudentManagementPage />} />
+            <Route path="subjects"    element={<AdminSubjectPage />} />
+            <Route path="ai-settings" element={<AISettingsPage />} />
+            <Route path="settings"    element={<SystemSettingsPage />} />
           </Route>
 
           {/* ── Lecturer ───────────────────────────────────────── */}
@@ -78,11 +89,25 @@ export default function App() {
             element={
               <ProtectedRoute role="LECTURER">
                 <RoleRoute allowedRoles={[ROLES.LECTURER]}>
-                  <LecturerOverviewPage />
+                  <LecturerLayout />
                 </RoleRoute>
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index                   element={<LecturerOverviewPage />} />
+            <Route path="classes"          element={<ClassManagementPage />} />
+            <Route path="subjects"         element={<LecturerSubjectPage />} />
+            <Route path="clos"             element={<CLOManagementPage />} />
+            <Route path="lessons"          element={<LessonManagementPage />} />
+            <Route path="assignments"      element={<AssignmentManagementPage />} />
+            <Route path="submissions"      element={<SubmissionManagementPage />} />
+            <Route path="grading/:submissionId" element={<GradingPage />} />
+            <Route path="ai/exercises"     element={<AIExerciseGeneratorPage />} />
+            <Route path="ai/quizzes"       element={<AIQuizGeneratorPage />} />
+            <Route path="ai/feedback"      element={<AIFeedbackGeneratorPage />} />
+            <Route path="ai/slides"        element={<AISlideGeneratorPage />} />
+            <Route path="reports"          element={<LecturerReportPage />} />
+          </Route>
 
           {/* ── Student ────────────────────────────────────────── */}
           <Route
@@ -100,5 +125,6 @@ export default function App() {
         </Routes>
       </AuthProvider>
     </BrowserRouter>
+  </ThemeProvider>
   )
 }

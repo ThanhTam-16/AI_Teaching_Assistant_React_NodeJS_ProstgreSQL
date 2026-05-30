@@ -71,7 +71,7 @@ export default function SystemSettingsPage() {
   }, {})
 
   return (
-    <div className="space-y-4 max-w-3xl">
+    <div className="space-y-4 max-w-screen-2xl">
       <PageHeader
         title="Cài đặt hệ thống"
         description="Cấu hình các thông số vận hành hệ thống"
@@ -89,7 +89,7 @@ export default function SystemSettingsPage() {
       )}
 
       {loading ? (
-        <div className="space-y-3">
+        <div className="grid md:grid-cols-2 gap-4 items-start">
           {[1,2].map((g) => (
             <div key={g} className="dark:bg-gray-900/60 bg-white border dark:border-gray-800/60 border-gray-200 rounded-xl overflow-hidden">
               <div className="px-4 py-2.5 border-b dark:border-gray-800 border-gray-200"><Skeleton className="h-3 w-20" /></div>
@@ -108,43 +108,45 @@ export default function SystemSettingsPage() {
           <div className="text-xs dark:text-gray-600 text-gray-400">Chưa có cài đặt nào.</div>
         </div>
       ) : (
-        Object.entries(groups).map(([groupName, items]) => (
-          <div key={groupName} className="dark:bg-gray-900/60 bg-white border dark:border-gray-800/60 border-gray-200 rounded-xl overflow-hidden">
-            <div className="px-4 py-2 border-b dark:border-gray-800 border-gray-200 dark:bg-gray-900/40 bg-gray-50">
-              <h3 className="text-[9px] font-bold uppercase tracking-widest dark:text-gray-500 text-gray-400">{groupName}</h3>
-            </div>
-            <div className="divide-y dark:divide-gray-800/40 divide-gray-100">
-              {items.map((s) => (
-                <div key={s.key} className="flex flex-wrap items-center gap-3 justify-between px-4 py-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium dark:text-gray-200 text-gray-700">{s.label ?? s.key}</div>
-                    {s.description && <div className="text-[10px] dark:text-gray-500 text-gray-400 mt-0.5">{s.description}</div>}
-                    <div className="font-mono text-[9px] dark:text-gray-700 text-gray-400 mt-0.5">{s.key}</div>
+        <div className="grid md:grid-cols-2 gap-4 items-start">
+          {Object.entries(groups).map(([groupName, items]) => (
+            <div key={groupName} className="dark:bg-gray-900/60 bg-white border dark:border-gray-800/60 border-gray-200 rounded-xl overflow-hidden">
+              <div className="px-4 py-2 border-b dark:border-gray-800 border-gray-200 dark:bg-gray-900/40 bg-gray-50">
+                <h3 className="text-[9px] font-bold uppercase tracking-widest dark:text-gray-500 text-gray-400">{groupName}</h3>
+              </div>
+              <div className="divide-y dark:divide-gray-800/40 divide-gray-100">
+                {items.map((s) => (
+                  <div key={s.key} className="flex flex-wrap items-center gap-3 justify-between px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium dark:text-gray-200 text-gray-700">{s.label ?? s.key}</div>
+                      {s.description && <div className="text-[10px] dark:text-gray-500 text-gray-400 mt-0.5">{s.description}</div>}
+                      <div className="font-mono text-[9px] dark:text-gray-700 text-gray-400 mt-0.5">{s.key}</div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {edits[s.key] !== undefined && (
+                        <SettingInput setting={s} value={edits[s.key]} onChange={(v) => setEdits((e) => ({ ...e, [s.key]: v }))} />
+                      )}
+                      <button
+                        onClick={() => handleSave(s.key)}
+                        disabled={!isDirty(s.key) || saving[s.key]}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold rounded-lg border transition-all disabled:opacity-30 disabled:cursor-not-allowed whitespace-nowrap
+                          ${saved[s.key]
+                            ? 'dark:bg-emerald-500/10 bg-emerald-50 dark:border-emerald-500/20 border-emerald-200 text-emerald-400'
+                            : 'dark:bg-orange-500/10 bg-orange-50 dark:border-orange-500/20 border-orange-200 text-orange-400 dark:hover:bg-orange-500/20 hover:bg-orange-100'
+                          }`}
+                      >
+                        {saving[s.key] ? <div className="w-2.5 h-2.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                          : saved[s.key] ? <Check size={10} /> : <Save size={10} />
+                        }
+                        {saved[s.key] ? 'Đã lưu' : 'Lưu'}
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {edits[s.key] !== undefined && (
-                      <SettingInput setting={s} value={edits[s.key]} onChange={(v) => setEdits((e) => ({ ...e, [s.key]: v }))} />
-                    )}
-                    <button
-                      onClick={() => handleSave(s.key)}
-                      disabled={!isDirty(s.key) || saving[s.key]}
-                      className={`flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold rounded-lg border transition-all disabled:opacity-30 disabled:cursor-not-allowed whitespace-nowrap
-                        ${saved[s.key]
-                          ? 'dark:bg-emerald-500/10 bg-emerald-50 dark:border-emerald-500/20 border-emerald-200 text-emerald-400'
-                          : 'dark:bg-orange-500/10 bg-orange-50 dark:border-orange-500/20 border-orange-200 text-orange-400 dark:hover:bg-orange-500/20 hover:bg-orange-100'
-                        }`}
-                    >
-                      {saving[s.key] ? <div className="w-2.5 h-2.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                        : saved[s.key] ? <Check size={10} /> : <Save size={10} />
-                      }
-                      {saved[s.key] ? 'Đã lưu' : 'Lưu'}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
     </div>
   )
