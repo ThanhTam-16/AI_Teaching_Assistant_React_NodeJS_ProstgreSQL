@@ -165,6 +165,74 @@ const getAssignmentsOfLecturerSubject = async (req, res, next) => {
   }
 };
 
+const getStudentSubjects = async (req, res, next) => {
+  try {
+    const { page, limit, skip } = getPaginationParams(req.query);
+    const { search } = req.query;
+    const studentId = req.user.id;
+
+    const result = await subjectService.getStudentSubjects({
+      page,
+      limit,
+      skip,
+      search,
+      studentId,
+    });
+
+    return successResponse(res, "Student subjects fetched successfully", result, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentSubjectById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.id;
+    const subject = await subjectService.getStudentSubjectById(id, studentId);
+
+    return successResponse(res, "Student subject details fetched successfully", subject, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentSubjectClos = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.id;
+    const clos = await subjectService.getStudentSubjectClos(id, studentId);
+
+    return successResponse(res, "Student subject CLOs fetched successfully", clos, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentSubjectLessons = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.id;
+    const lessons = await subjectService.getStudentSubjectLessons(id, studentId);
+
+    return successResponse(res, "Student subject lessons fetched successfully", lessons, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentSubjectAssignments = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.id;
+    const assignments = await subjectService.getStudentSubjectAssignments(id, studentId);
+
+    return successResponse(res, "Student subject assignments fetched successfully", assignments, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getSubjects,
   getSubjectById,
@@ -179,4 +247,9 @@ module.exports = {
   getClassesOfLecturerSubject,
   getLessonsOfLecturerSubject,
   getAssignmentsOfLecturerSubject,
+  getStudentSubjects,
+  getStudentSubjectById,
+  getStudentSubjectClos,
+  getStudentSubjectLessons,
+  getStudentSubjectAssignments,
 };

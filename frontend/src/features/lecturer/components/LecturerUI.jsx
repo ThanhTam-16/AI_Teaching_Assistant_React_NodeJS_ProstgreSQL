@@ -31,7 +31,7 @@ export function Modal({ onClose, children, size = 'md' }) {
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center p-4`}
-      style={{ backdropFilter: 'blur(6px)', backgroundColor: 'rgba(0,0,0,0.5)' }}
+      style={{ backdropFilter: 'blur(6px)', backgroundColor: 'rgba(0,0,0,0.5)', margin: 0 }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
@@ -131,8 +131,8 @@ export function Pagination({ page, totalPages, onChange }) {
     <div className="flex items-center justify-between px-4 py-2.5 border-t dark:border-[#21262D] border-gray-200">
       <span className="text-[10px] dark:text-gray-600 text-gray-400">Trang {page} / {totalPages}</span>
       <div className="flex items-center gap-1">
-        {['‹','›'].map((arrow, idx) => (
-          <button key={arrow} onClick={() => onChange(idx === 0 ? page-1 : page+1)}
+        {['‹', '›'].map((arrow, idx) => (
+          <button key={arrow} onClick={() => onChange(idx === 0 ? page - 1 : page + 1)}
             disabled={idx === 0 ? page <= 1 : page >= totalPages}
             className="w-6 h-6 rounded-md flex items-center justify-center text-xs dark:text-gray-400 text-gray-500 dark:hover:bg-gray-800 hover:bg-gray-100 disabled:opacity-30 transition-all"
           >{arrow}</button>

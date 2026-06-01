@@ -38,6 +38,13 @@ router.get("/lecturer/:id/assignments", authorizeRoles("LECTURER"), subjectContr
 router.get("/admin", authorizeRoles("ADMIN"), subjectController.getSubjects);
 router.get("/admin/:id", authorizeRoles("ADMIN"), subjectController.getSubjectById);
 
+// --- STUDENT PATHS ---
+router.get("/student", authorizeRoles("STUDENT"), subjectController.getStudentSubjects);
+router.get("/student/:id", authorizeRoles("STUDENT"), subjectController.getStudentSubjectById);
+router.get("/student/:id/clos", authorizeRoles("STUDENT"), subjectController.getStudentSubjectClos);
+router.get("/student/:id/lessons", authorizeRoles("STUDENT"), subjectController.getStudentSubjectLessons);
+router.get("/student/:id/assignments", authorizeRoles("STUDENT"), subjectController.getStudentSubjectAssignments);
+
 // --- DETAILS / ACTIONS (relative to mount) ---
 router.get("/:id", checkRole, (req, res, next) => {
   if (req.params.id === "lecturer") {

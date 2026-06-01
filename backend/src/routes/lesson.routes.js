@@ -12,34 +12,39 @@ const {
 const router = express.Router();
 
 router.use(authenticate);
-router.use(authorizeRoles("LECTURER"));
+
+// --- STUDENT PATHS ---
+router.get("/student", authorizeRoles("STUDENT"), lessonController.getStudentLessons);
+router.get("/student/:id", authorizeRoles("STUDENT"), lessonController.getStudentLessonById);
+router.get("/student/:id/materials", authorizeRoles("STUDENT"), lessonController.getStudentLessonMaterials);
+router.get("/student/:id/assignments", authorizeRoles("STUDENT"), lessonController.getStudentLessonAssignments);
 
 // Root paths (compatibility for mounting under /lecturer/lessons)
-router.get("/", lessonController.getLessons);
-router.post("/", validate(validateCreateLesson), lessonController.createLesson);
+router.get("/", authorizeRoles("LECTURER"), lessonController.getLessons);
+router.post("/", authorizeRoles("LECTURER"), validate(validateCreateLesson), lessonController.createLesson);
 
 // Module paths (for mounting under /lessons)
-router.get("/lecturer", lessonController.getLessons);
-router.get("/lecturer/:id", lessonController.getLessonById);
-router.post("/lecturer", validate(validateCreateLesson), lessonController.createLesson);
-router.put("/lecturer/:id", validate(validateUpdateLesson), lessonController.updateLesson);
-router.delete("/lecturer/:id", lessonController.deleteLesson);
-router.patch("/lecturer/:id/status", lessonController.updateLessonStatus);
+router.get("/lecturer", authorizeRoles("LECTURER"), lessonController.getLessons);
+router.get("/lecturer/:id", authorizeRoles("LECTURER"), lessonController.getLessonById);
+router.post("/lecturer", authorizeRoles("LECTURER"), validate(validateCreateLesson), lessonController.createLesson);
+router.put("/lecturer/:id", authorizeRoles("LECTURER"), validate(validateUpdateLesson), lessonController.updateLesson);
+router.delete("/lecturer/:id", authorizeRoles("LECTURER"), lessonController.deleteLesson);
+router.patch("/lecturer/:id/status", authorizeRoles("LECTURER"), lessonController.updateLessonStatus);
 
 // Materials sub-module paths
-router.post("/lecturer/:id/materials", validate(validateAddMaterial), lessonController.addLessonMaterial);
-router.get("/lecturer/:id/materials", lessonController.getLessonMaterials);
-router.delete("/lecturer/:id/materials/:materialId", lessonController.deleteLessonMaterial);
+router.post("/lecturer/:id/materials", authorizeRoles("LECTURER"), validate(validateAddMaterial), lessonController.addLessonMaterial);
+router.get("/lecturer/:id/materials", authorizeRoles("LECTURER"), lessonController.getLessonMaterials);
+router.delete("/lecturer/:id/materials/:materialId", authorizeRoles("LECTURER"), lessonController.deleteLessonMaterial);
 
 // Relative paths (compatibility for mounting under /lecturer/lessons)
-router.get("/:id", lessonController.getLessonById);
-router.put("/:id", validate(validateUpdateLesson), lessonController.updateLesson);
-router.delete("/:id", lessonController.deleteLesson);
-router.patch("/:id/status", lessonController.updateLessonStatus);
+router.get("/:id", authorizeRoles("LECTURER"), lessonController.getLessonById);
+router.put("/:id", authorizeRoles("LECTURER"), validate(validateUpdateLesson), lessonController.updateLesson);
+router.delete("/:id", authorizeRoles("LECTURER"), lessonController.deleteLesson);
+router.patch("/:id/status", authorizeRoles("LECTURER"), lessonController.updateLessonStatus);
 
 // Materials relative paths (compatibility for mounting under /lecturer/lessons)
-router.post("/:id/materials", validate(validateAddMaterial), lessonController.addLessonMaterial);
-router.get("/:id/materials", lessonController.getLessonMaterials);
-router.delete("/:id/materials/:materialId", lessonController.deleteLessonMaterial);
+router.post("/:id/materials", authorizeRoles("LECTURER"), validate(validateAddMaterial), lessonController.addLessonMaterial);
+router.get("/:id/materials", authorizeRoles("LECTURER"), lessonController.getLessonMaterials);
+router.delete("/:id/materials/:materialId", authorizeRoles("LECTURER"), lessonController.deleteLessonMaterial);
 
 module.exports = router;

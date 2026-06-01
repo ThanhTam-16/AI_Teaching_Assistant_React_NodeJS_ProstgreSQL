@@ -368,6 +368,258 @@ const updateAssignmentStatus = async (id, status, lecturerId) => {
   return updatedAssignment;
 };
 
+const getStudentAssignments = async ({ studentId, page, limit, skip, search, classId, subjectId, status }) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  if (classIds.length === 0) {
+    return formatPaginatedResponse([], 0, page, limit, "assignments");
+  }
+
+  const where = {
+    classId: { in: classIds },
+    status: { in: ["ASSIGNED", "CLOSED"] },
+  };
+
+  if (classId) {
+    if (!classIds.includes(classId)) {
+      const error = new Error("Access denied to this class assignments");
+      error.statusCode = 403;
+      throw error;
+    }
+    where.classId = classId;
+  }
+
+  if (subjectId) {
+    where.subjectId = subjectId;
+  }
+
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  // Handle custom status filters
+  if (status) {
+    if (status === "submitted") {
+      where.submissions = {
+        some: {
+          studentId,
+          status: { in: ["SUBMITTED", "LATE", "GRADED", "NEED_REVIEW"] },
+        },
+      };
+    } else if (status === "not_submitted") {
+      where.submissions = {
+        none: {
+          studentId,
+        },
+      };
+      where.status = "ASSIGNED";
+    } else if (status === "graded") {
+      where.submissions = {
+        some: {
+          studentId,
+          status: "GRADED",
+        },
+      };
+    } else if (status === "upcoming") {
+      where.status = "ASSIGNED";
+      where.dueDate = { gte: new Date() };
+    } else if (status === "overdue") {
+      where.status = "ASSIGNED";
+      where.dueDate = { lt: new Date() };
+      where.submissions = {
+        none: {
+          studentId,
+        },
+      };
+    } else if (["ASSIGNED", "CLOSED"].includes(status)) {
+      where.status = status;
+    }
+  }
+
+  const [assignments, total] = await Promise.all([
+    prisma.assignment.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { dueDate: "asc" },
+      include: {
+        subject: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          },
+        },
+        class: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          },
+        },
+        lesson: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        submissions: {
+          where: { studentId },
+          include: {
+            grade: {
+              select: {
+                score: true,
+                note: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.assignment.count({ where }),
+  ]);
+
+  const items = assignments.map((a) => {
+    const { submissions, ...rest } = a;
+    const mySubmission = submissions[0] || null;
+    return {
+      ...rest,
+      mySubmission,
+      submissionStatus: mySubmission ? mySubmission.status : "NOT_SUBMITTED",
+    };
+  });
+
+  return formatPaginatedResponse(items, total, page, limit, "assignments");
+};
+
+const getStudentAssignmentById = async (id, studentId) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  const assignment = await prisma.assignment.findFirst({
+    where: {
+      id,
+      classId: { in: classIds },
+      status: { in: ["ASSIGNED", "CLOSED"] },
+    },
+    include: {
+      subject: {
+        select: {
+          id: true,
+          code: true,
+          name: true,
+        },
+      },
+      class: {
+        select: {
+          id: true,
+          code: true,
+          name: true,
+        },
+      },
+      lesson: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+      clo: {
+        select: {
+          id: true,
+          code: true,
+          description: true,
+        },
+      },
+      submissions: {
+        where: { studentId },
+        include: {
+          grade: true,
+          feedbacks: {
+            include: {
+              lecturer: {
+                select: {
+                  fullName: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!assignment) {
+    const error = new Error("Assignment not found or access denied");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const { submissions, ...rest } = assignment;
+  const mySubmission = submissions[0] || null;
+
+  return {
+    ...rest,
+    mySubmission,
+    submissionStatus: mySubmission ? mySubmission.status : "NOT_SUBMITTED",
+  };
+};
+
+const getStudentAssignmentMySubmission = async (id, studentId) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  const assignment = await prisma.assignment.findFirst({
+    where: {
+      id,
+      classId: { in: classIds },
+      status: { in: ["ASSIGNED", "CLOSED"] },
+    },
+  });
+
+  if (!assignment) {
+    const error = new Error("Assignment not found or access denied");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const submission = await prisma.submission.findUnique({
+    where: {
+      assignmentId_studentId: {
+        assignmentId: id,
+        studentId,
+      },
+    },
+    include: {
+      grade: true,
+      feedbacks: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          lecturer: {
+            select: {
+              fullName: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return submission || null;
+};
+
 module.exports = {
   getAssignments,
   getAssignmentById,
@@ -375,4 +627,7 @@ module.exports = {
   updateAssignment,
   deleteAssignment,
   updateAssignmentStatus,
+  getStudentAssignments,
+  getStudentAssignmentById,
+  getStudentAssignmentMySubmission,
 };

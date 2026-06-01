@@ -85,6 +85,53 @@ const updateAssignmentStatus = async (req, res, next) => {
   }
 };
 
+const getStudentAssignments = async (req, res, next) => {
+  try {
+    const { page, limit, skip } = getPaginationParams(req.query);
+    const { search, classId, subjectId, status } = req.query;
+    const studentId = req.user.id;
+
+    const result = await assignmentService.getStudentAssignments({
+      page,
+      limit,
+      skip,
+      search,
+      classId,
+      subjectId,
+      status,
+      studentId,
+    });
+
+    return successResponse(res, "Student assignments fetched successfully", result, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentAssignmentById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.id;
+    const assignment = await assignmentService.getStudentAssignmentById(id, studentId);
+
+    return successResponse(res, "Student assignment details fetched successfully", assignment, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentAssignmentMySubmission = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.id;
+    const submission = await assignmentService.getStudentAssignmentMySubmission(id, studentId);
+
+    return successResponse(res, "Student assignment submission details fetched successfully", submission, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAssignments,
   getAssignmentById,
@@ -92,4 +139,7 @@ module.exports = {
   updateAssignment,
   deleteAssignment,
   updateAssignmentStatus,
+  getStudentAssignments,
+  getStudentAssignmentById,
+  getStudentAssignmentMySubmission,
 };

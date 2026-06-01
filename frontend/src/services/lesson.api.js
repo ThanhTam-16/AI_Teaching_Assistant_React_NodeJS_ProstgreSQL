@@ -9,3 +9,10 @@ export const updateLessonStatus = (id, status)    => api.patch(`/lessons/lecture
 export const getLessonMaterials = (id)            => api.get(`/lessons/lecturer/${id}/materials`)
 export const addLessonMaterial  = (id, data)      => api.post(`/lessons/lecturer/${id}/materials`, data)
 export const deleteMaterial     = (lessonId, mid) => api.delete(`/lessons/lecturer/${lessonId}/materials/${mid}`)
+
+// ── Student Lessons ──────────────────────────────────────────────────────────
+export const getStudentLessons          = (p = {}) => api.get('/lessons/student', { params: p })
+export const getStudentLessonById       = (id)     => api.get(`/lessons/student/${id}`)
+export const getStudentLessonMaterials  = (id)     => api.get(`/lessons/student/${id}/materials`)
+export const getStudentLessonAssignments = (id)    => api.get(`/lessons/student/${id}/assignments`)
+

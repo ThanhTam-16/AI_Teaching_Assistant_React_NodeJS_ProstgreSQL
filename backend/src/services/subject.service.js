@@ -426,6 +426,205 @@ const getAssignmentsOfLecturerSubject = async (subjectId, lecturerId) => {
   return assignments;
 };
 
+const getStudentSubjects = async ({ studentId, page, limit, skip, search }) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  if (classIds.length === 0) {
+    return formatPaginatedResponse([], 0, page, limit, "subjects");
+  }
+
+  const where = {
+    classSubjects: {
+      some: {
+        classId: { in: classIds },
+      },
+    },
+  };
+
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: "insensitive" } },
+      { code: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  const [subjects, total] = await Promise.all([
+    prisma.subject.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { code: "asc" },
+    }),
+    prisma.subject.count({ where }),
+  ]);
+
+  return formatPaginatedResponse(subjects, total, page, limit, "subjects");
+};
+
+const getStudentSubjectById = async (id, studentId) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  const subject = await prisma.subject.findFirst({
+    where: {
+      id,
+      classSubjects: {
+        some: {
+          classId: { in: classIds },
+        },
+      },
+    },
+  });
+
+  if (!subject) {
+    const error = new Error("Subject not found or access denied");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return subject;
+};
+
+const getStudentSubjectClos = async (subjectId, studentId) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  const subject = await prisma.subject.findFirst({
+    where: {
+      id: subjectId,
+      classSubjects: {
+        some: {
+          classId: { in: classIds },
+        },
+      },
+    },
+  });
+
+  if (!subject) {
+    const error = new Error("Subject not found or access denied");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const clos = await prisma.cLO.findMany({
+    where: { subjectId },
+    orderBy: { code: "asc" },
+  });
+
+  return clos;
+};
+
+const getStudentSubjectLessons = async (subjectId, studentId) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  const subject = await prisma.subject.findFirst({
+    where: {
+      id: subjectId,
+      classSubjects: {
+        some: {
+          classId: { in: classIds },
+        },
+      },
+    },
+  });
+
+  if (!subject) {
+    const error = new Error("Subject not found or access denied");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const lessons = await prisma.lesson.findMany({
+    where: {
+      subjectId,
+      status: "PUBLISHED",
+    },
+    include: {
+      clo: {
+        select: {
+          id: true,
+          code: true,
+          description: true,
+        },
+      },
+    },
+    orderBy: { chapter: "asc" },
+  });
+
+  return lessons;
+};
+
+const getStudentSubjectAssignments = async (subjectId, studentId) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  const subject = await prisma.subject.findFirst({
+    where: {
+      id: subjectId,
+      classSubjects: {
+        some: {
+          classId: { in: classIds },
+        },
+      },
+    },
+  });
+
+  if (!subject) {
+    const error = new Error("Subject not found or access denied");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const assignments = await prisma.assignment.findMany({
+    where: {
+      subjectId,
+      classId: { in: classIds },
+      status: { in: ["ASSIGNED", "CLOSED"] },
+    },
+    include: {
+      class: {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+        },
+      },
+      lesson: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+      clo: {
+        select: {
+          id: true,
+          code: true,
+        },
+      },
+    },
+    orderBy: { dueDate: "asc" },
+  });
+
+  return assignments;
+};
+
 module.exports = {
   getSubjects,
   getSubjectById,
@@ -440,4 +639,9 @@ module.exports = {
   getClassesOfLecturerSubject,
   getLessonsOfLecturerSubject,
   getAssignmentsOfLecturerSubject,
+  getStudentSubjects,
+  getStudentSubjectById,
+  getStudentSubjectClos,
+  getStudentSubjectLessons,
+  getStudentSubjectAssignments,
 };

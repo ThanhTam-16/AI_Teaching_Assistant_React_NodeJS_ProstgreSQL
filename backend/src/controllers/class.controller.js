@@ -137,6 +137,39 @@ const removeStudentFromClass = async (req, res, next) => {
   }
 };
 
+const getStudentClasses = async (req, res, next) => {
+  try {
+    const { page, limit, skip } = getPaginationParams(req.query);
+    const { search, status } = req.query;
+    const studentId = req.user.id;
+
+    const result = await classService.getStudentClasses({
+      page,
+      limit,
+      skip,
+      search,
+      status,
+      studentId,
+    });
+
+    return successResponse(res, "Student classes fetched successfully", result, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentClassById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.id;
+    const classItem = await classService.getStudentClassById(id, studentId);
+
+    return successResponse(res, "Student class details fetched successfully", classItem, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getClasses,
   getClassById,
@@ -148,4 +181,6 @@ module.exports = {
   getStudentsInClass,
   addStudentToClass,
   removeStudentFromClass,
+  getStudentClasses,
+  getStudentClassById,
 };

@@ -319,6 +319,128 @@ const deleteQuizQuestion = async (questionId, lecturerId) => {
   return { id: questionId };
 };
 
+const getStudentQuizzes = async ({ studentId, page, limit, skip, subjectId, lessonId }) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  const classSubjects = await prisma.classSubject.findMany({
+    where: { classId: { in: classIds } },
+    select: { subjectId: true },
+  });
+  const subjectIds = [...new Set(classSubjects.map((cs) => cs.subjectId))];
+
+  if (subjectIds.length === 0) {
+    return formatPaginatedResponse([], 0, page, limit, "quizzes");
+  }
+
+  const where = {
+    subjectId: { in: subjectIds },
+  };
+
+  if (subjectId) {
+    if (!subjectIds.includes(subjectId)) {
+      const error = new Error("Access denied: You are not enrolled in this subject");
+      error.statusCode = 403;
+      throw error;
+    }
+    where.subjectId = subjectId;
+  }
+
+  if (lessonId) {
+    where.lessonId = lessonId;
+  }
+
+  const [quizzes, total] = await Promise.all([
+    prisma.quiz.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      include: {
+        subject: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          },
+        },
+        lesson: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        _count: {
+          select: {
+            questions: true,
+          },
+        },
+      },
+    }),
+    prisma.quiz.count({ where }),
+  ]);
+
+  const items = quizzes.map((q) => {
+    const { _count, ...rest } = q;
+    return {
+      ...rest,
+      questionCount: _count.questions,
+    };
+  });
+
+  return formatPaginatedResponse(items, total, page, limit, "quizzes");
+};
+
+const getStudentQuizById = async (id, studentId) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  const classSubjects = await prisma.classSubject.findMany({
+    where: { classId: { in: classIds } },
+    select: { subjectId: true },
+  });
+  const subjectIds = [...new Set(classSubjects.map((cs) => cs.subjectId))];
+
+  const quiz = await prisma.quiz.findFirst({
+    where: {
+      id,
+      subjectId: { in: subjectIds },
+    },
+    include: {
+      subject: {
+        select: {
+          id: true,
+          code: true,
+          name: true,
+        },
+      },
+      lesson: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+      questions: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  if (!quiz) {
+    const error = new Error("Quiz not found or access denied");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return quiz;
+};
+
 module.exports = {
   getQuizzes,
   getQuizById,
@@ -328,4 +450,6 @@ module.exports = {
   addQuizQuestion,
   updateQuizQuestion,
   deleteQuizQuestion,
+  getStudentQuizzes,
+  getStudentQuizById,
 };

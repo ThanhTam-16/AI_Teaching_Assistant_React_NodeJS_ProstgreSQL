@@ -6,14 +6,18 @@ const { authorizeRoles } = require("../middlewares/role.middleware");
 const router = express.Router();
 
 router.use(authenticate);
-router.use(authorizeRoles("LECTURER"));
+
+// --- STUDENT PATHS ---
+router.get("/student", authorizeRoles("STUDENT"), feedbackController.getStudentFeedbacks);
+router.get("/student/submissions/:submissionId", authorizeRoles("STUDENT"), feedbackController.getStudentFeedbackBySubmissionId);
+router.get("/student/assignments/:assignmentId", authorizeRoles("STUDENT"), feedbackController.getStudentFeedbackByAssignmentId);
 
 // Root paths (compatibility for mounting under /lecturer/feedbacks)
-router.put("/:id", feedbackController.updateFeedback);
-router.delete("/:id", feedbackController.deleteFeedback);
+router.put("/:id", authorizeRoles("LECTURER"), feedbackController.updateFeedback);
+router.delete("/:id", authorizeRoles("LECTURER"), feedbackController.deleteFeedback);
 
 // Module paths (for mounting under /feedbacks)
-router.put("/lecturer/:id", feedbackController.updateFeedback);
-router.delete("/lecturer/:id", feedbackController.deleteFeedback);
+router.put("/lecturer/:id", authorizeRoles("LECTURER"), feedbackController.updateFeedback);
+router.delete("/lecturer/:id", authorizeRoles("LECTURER"), feedbackController.deleteFeedback);
 
 module.exports = router;

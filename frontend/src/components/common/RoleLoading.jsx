@@ -32,10 +32,10 @@ const ROLE_CONFIG = {
   STUDENT: {
     label: 'Student Portal',
     sub: 'Đang tải không gian học tập...',
-    primary: '#10b981',     // emerald
-    secondary: '#34d399',
-    glow: 'rgba(16,185,129,0.3)',
-    ring: 'rgba(16,185,129,0.15)',
+    primary: '#f97316',     // orange pastel / warm orange
+    secondary: '#2dd4bf',   // mint
+    glow: 'rgba(249,115,22,0.3)',
+    ring: 'rgba(249,115,22,0.15)',
     icon: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
@@ -67,9 +67,13 @@ export default function RoleLoading({ role = 'ADMIN' }) {
     ? `0 0 32px ${cfg.glow}, inset 0 1px 0 ${cfg.primary}20`
     : `0 0 16px ${cfg.glow.replace('0.3', '0.15')}, inset 0 1px 0 ${cfg.primary}10`
 
+  const pageBg = role === 'STUDENT'
+    ? (dark ? '#0D1117' : '#FFF8F3')
+    : (dark ? '#0a0a0f' : '#f9fafb')
+
   return (
     <div
-      style={{ background: dark ? '#0a0a0f' : '#f9fafb' }}
+      style={{ background: pageBg }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
     >
       {/* Ambient glow bg */}

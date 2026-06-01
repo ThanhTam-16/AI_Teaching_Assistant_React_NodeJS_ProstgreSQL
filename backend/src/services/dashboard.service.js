@@ -317,7 +317,213 @@ const getLecturerStats = async (lecturerId) => {
   };
 };
 
+const getStudentStats = async (studentId) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  if (classIds.length === 0) {
+    return {
+      totalClasses: 0,
+      totalSubjects: 0,
+      totalLessons: 0,
+      totalAssignments: 0,
+      submittedAssignments: 0,
+      notSubmittedAssignments: 0,
+      gradedSubmissions: 0,
+      pendingSubmissions: 0,
+      averageScore: 0,
+      upcomingAssignments: [],
+      recentFeedbacks: [],
+      recentGrades: [],
+    };
+  }
+
+  // Get distinct subject IDs for the student's classes
+  const classSubjects = await prisma.classSubject.findMany({
+    where: { classId: { in: classIds } },
+    select: { subjectId: true },
+  });
+  const subjectIds = [...new Set(classSubjects.map((cs) => cs.subjectId))];
+
+  const [
+    totalClasses,
+    totalSubjects,
+    totalLessons,
+    totalAssignments,
+    submittedAssignments,
+    gradedSubmissions,
+    pendingSubmissions,
+    avgScoreResult,
+    upcomingAssignments,
+    recentFeedbacks,
+    recentGrades,
+  ] = await Promise.all([
+    prisma.classEnrollment.count({ where: { studentId } }),
+    Promise.resolve(subjectIds.length),
+    prisma.lesson.count({
+      where: {
+        subjectId: { in: subjectIds },
+        status: "PUBLISHED",
+      },
+    }),
+    prisma.assignment.count({
+      where: {
+        classId: { in: classIds },
+        status: { in: ["ASSIGNED", "CLOSED"] },
+      },
+    }),
+    prisma.submission.count({
+      where: {
+        studentId,
+        status: { in: ["SUBMITTED", "LATE", "GRADED", "NEED_REVIEW"] },
+      },
+    }),
+    prisma.submission.count({
+      where: {
+        studentId,
+        status: "GRADED",
+      },
+    }),
+    prisma.submission.count({
+      where: {
+        studentId,
+        status: { in: ["SUBMITTED", "LATE", "NEED_REVIEW"] },
+      },
+    }),
+    prisma.grade.aggregate({
+      where: {
+        submission: {
+          studentId,
+        },
+      },
+      _avg: {
+        score: true,
+      },
+    }),
+    prisma.assignment.findMany({
+      where: {
+        classId: { in: classIds },
+        status: "ASSIGNED",
+        dueDate: { gte: new Date() },
+      },
+      orderBy: {
+        dueDate: "asc",
+      },
+      take: 5,
+      include: {
+        subject: {
+          select: {
+            name: true,
+            code: true,
+          },
+        },
+        class: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    }),
+    prisma.feedback.findMany({
+      where: {
+        submission: {
+          studentId,
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 5,
+      include: {
+        lecturer: {
+          select: {
+            fullName: true,
+          },
+        },
+        submission: {
+          select: {
+            assignment: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.grade.findMany({
+      where: {
+        submission: {
+          studentId,
+        },
+      },
+      orderBy: {
+        gradedAt: "desc",
+      },
+      take: 5,
+      include: {
+        submission: {
+          select: {
+            assignment: {
+              select: {
+                id: true,
+                title: true,
+                totalScore: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
+
+  const notSubmittedAssignments = Math.max(0, totalAssignments - submittedAssignments);
+  const averageScore = avgScoreResult._avg.score !== null ? parseFloat(avgScoreResult._avg.score.toFixed(2)) : 0;
+
+  return {
+    totalClasses,
+    totalSubjects,
+    totalLessons,
+    totalAssignments,
+    submittedAssignments,
+    notSubmittedAssignments,
+    gradedSubmissions,
+    pendingSubmissions,
+    averageScore,
+    upcomingAssignments: upcomingAssignments.map((a) => ({
+      id: a.id,
+      title: a.title,
+      dueDate: a.dueDate,
+      subjectName: a.subject.name,
+      subjectCode: a.subject.code,
+      className: a.class.name,
+    })),
+    recentFeedbacks: recentFeedbacks.map((f) => ({
+      id: f.id,
+      content: f.content,
+      improvementAreas: f.improvementAreas,
+      source: f.source,
+      createdAt: f.createdAt,
+      lecturerName: f.lecturer ? f.lecturer.fullName : "System",
+      assignmentTitle: f.submission.assignment.title,
+    })),
+    recentGrades: recentGrades.map((g) => ({
+      id: g.id,
+      score: g.score,
+      note: g.note,
+      gradedAt: g.gradedAt,
+      assignmentTitle: g.submission.assignment.title,
+      totalScore: g.submission.assignment.totalScore,
+    })),
+  };
+};
+
 module.exports = {
   getStats,
   getLecturerStats,
+  getStudentStats,
 };

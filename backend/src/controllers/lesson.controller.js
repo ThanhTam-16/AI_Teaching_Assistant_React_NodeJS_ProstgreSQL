@@ -120,6 +120,63 @@ const deleteLessonMaterial = async (req, res, next) => {
   }
 };
 
+const getStudentLessons = async (req, res, next) => {
+  try {
+    const { page, limit, skip } = getPaginationParams(req.query);
+    const { search, subjectId } = req.query;
+    const studentId = req.user.id;
+
+    const result = await lessonService.getStudentLessons({
+      page,
+      limit,
+      skip,
+      search,
+      subjectId,
+      studentId,
+    });
+
+    return successResponse(res, "Student lessons fetched successfully", result, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentLessonById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.id;
+    const lesson = await lessonService.getStudentLessonById(id, studentId);
+
+    return successResponse(res, "Student lesson details fetched successfully", lesson, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentLessonMaterials = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.id;
+    const materials = await lessonService.getStudentLessonMaterials(id, studentId);
+
+    return successResponse(res, "Student lesson materials fetched successfully", materials, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentLessonAssignments = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.id;
+    const assignments = await lessonService.getStudentLessonAssignments(id, studentId);
+
+    return successResponse(res, "Student lesson assignments fetched successfully", assignments, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getLessons,
   getLessonById,
@@ -130,4 +187,8 @@ module.exports = {
   addLessonMaterial,
   getLessonMaterials,
   deleteLessonMaterial,
+  getStudentLessons,
+  getStudentLessonById,
+  getStudentLessonMaterials,
+  getStudentLessonAssignments,
 };

@@ -36,8 +36,46 @@ const getAssignmentReport = async (req, res, next) => {
   }
 };
 
+const getStudentProgress = async (req, res, next) => {
+  try {
+    const studentId = req.user.id;
+    const progress = await reportService.getStudentProgress(studentId);
+
+    return successResponse(res, "Student progress report fetched successfully", progress, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentSubjectProgress = async (req, res, next) => {
+  try {
+    const { subjectId } = req.params;
+    const studentId = req.user.id;
+    const progress = await reportService.getStudentSubjectProgress(studentId, subjectId);
+
+    return successResponse(res, "Student subject progress report fetched successfully", progress, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentClassProgress = async (req, res, next) => {
+  try {
+    const { classId } = req.params;
+    const studentId = req.user.id;
+    const progress = await reportService.getStudentClassProgress(studentId, classId);
+
+    return successResponse(res, "Student class progress report fetched successfully", progress, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getOverviewReport,
   getClassReport,
   getAssignmentReport,
+  getStudentProgress,
+  getStudentSubjectProgress,
+  getStudentClassProgress,
 };

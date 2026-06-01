@@ -35,6 +35,10 @@ router.delete("/lecturer/:id/students/:studentId", authorizeRoles("LECTURER"), c
 router.get("/admin", authorizeRoles("ADMIN"), classController.getClasses);
 router.get("/admin/:id", authorizeRoles("ADMIN"), classController.getClassById);
 
+// --- STUDENT PATHS ---
+router.get("/student", authorizeRoles("STUDENT"), classController.getStudentClasses);
+router.get("/student/:id", authorizeRoles("STUDENT"), classController.getStudentClassById);
+
 // --- DETAILS / ACTIONS (relative to mount) ---
 router.get("/:id", checkRole, (req, res, next) => {
   if (req.params.id === "lecturer") {

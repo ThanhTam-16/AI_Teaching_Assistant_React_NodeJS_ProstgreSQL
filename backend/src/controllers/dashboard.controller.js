@@ -20,7 +20,18 @@ const getLecturerStats = async (req, res, next) => {
   }
 };
 
+const getStudentStats = async (req, res, next) => {
+  try {
+    const studentId = req.user.id;
+    const stats = await dashboardService.getStudentStats(studentId);
+    return successResponse(res, "Student dashboard overview fetched successfully", stats, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getStats,
   getLecturerStats,
+  getStudentStats,
 };

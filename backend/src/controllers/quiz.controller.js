@@ -106,6 +106,39 @@ const deleteQuizQuestion = async (req, res, next) => {
   }
 };
 
+const getStudentQuizzes = async (req, res, next) => {
+  try {
+    const { page, limit, skip } = getPaginationParams(req.query);
+    const { subjectId, lessonId } = req.query;
+    const studentId = req.user.id;
+
+    const result = await quizService.getStudentQuizzes({
+      page,
+      limit,
+      skip,
+      subjectId,
+      lessonId,
+      studentId,
+    });
+
+    return successResponse(res, "Student quizzes fetched successfully", result, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentQuizById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.id;
+    const quiz = await quizService.getStudentQuizById(id, studentId);
+
+    return successResponse(res, "Student quiz details fetched successfully", quiz, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getQuizzes,
   getQuizById,
@@ -115,4 +148,6 @@ module.exports = {
   addQuizQuestion,
   updateQuizQuestion,
   deleteQuizQuestion,
+  getStudentQuizzes,
+  getStudentQuizById,
 };

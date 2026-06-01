@@ -346,6 +346,196 @@ const deleteLessonMaterial = async (lessonId, materialId, lecturerId) => {
   return { lessonId, materialId };
 };
 
+const getStudentLessons = async ({ studentId, page, limit, skip, search, subjectId }) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  const classSubjects = await prisma.classSubject.findMany({
+    where: { classId: { in: classIds } },
+    select: { subjectId: true },
+  });
+  const subjectIds = [...new Set(classSubjects.map((cs) => cs.subjectId))];
+
+  if (subjectIds.length === 0) {
+    return formatPaginatedResponse([], 0, page, limit, "lessons");
+  }
+
+  const where = {
+    status: "PUBLISHED",
+    subjectId: { in: subjectIds },
+  };
+
+  if (subjectId) {
+    if (!subjectIds.includes(subjectId)) {
+      const error = new Error("Access denied to this subject's lessons");
+      error.statusCode = 403;
+      throw error;
+    }
+    where.subjectId = subjectId;
+  }
+
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  const [lessons, total] = await Promise.all([
+    prisma.lesson.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: [
+        { subjectId: "asc" },
+        { chapter: "asc" },
+      ],
+      include: {
+        subject: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          },
+        },
+        clo: {
+          select: {
+            id: true,
+            code: true,
+          },
+        },
+      },
+    }),
+    prisma.lesson.count({ where }),
+  ]);
+
+  return formatPaginatedResponse(lessons, total, page, limit, "lessons");
+};
+
+const getStudentLessonById = async (id, studentId) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  const lesson = await prisma.lesson.findFirst({
+    where: {
+      id,
+      status: "PUBLISHED",
+      subject: {
+        classSubjects: {
+          some: {
+            classId: { in: classIds },
+          },
+        },
+      },
+    },
+    include: {
+      subject: {
+        select: {
+          id: true,
+          code: true,
+          name: true,
+        },
+      },
+      clo: {
+        select: {
+          id: true,
+          code: true,
+          description: true,
+        },
+      },
+      materials: true,
+    },
+  });
+
+  if (!lesson) {
+    const error = new Error("Lesson not found or access denied");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return lesson;
+};
+
+const getStudentLessonMaterials = async (lessonId, studentId) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  const lesson = await prisma.lesson.findFirst({
+    where: {
+      id: lessonId,
+      status: "PUBLISHED",
+      subject: {
+        classSubjects: {
+          some: {
+            classId: { in: classIds },
+          },
+        },
+      },
+    },
+  });
+
+  if (!lesson) {
+    const error = new Error("Lesson not found or access denied");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const materials = await prisma.lessonMaterial.findMany({
+    where: { lessonId },
+    orderBy: { uploadedAt: "desc" },
+  });
+
+  return materials;
+};
+
+const getStudentLessonAssignments = async (lessonId, studentId) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  const lesson = await prisma.lesson.findFirst({
+    where: {
+      id: lessonId,
+      status: "PUBLISHED",
+      subject: {
+        classSubjects: {
+          some: {
+            classId: { in: classIds },
+          },
+        },
+      },
+    },
+  });
+
+  if (!lesson) {
+    const error = new Error("Lesson not found or access denied");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const assignments = await prisma.assignment.findMany({
+    where: {
+      lessonId,
+      classId: { in: classIds },
+      status: { in: ["ASSIGNED", "CLOSED"] },
+    },
+    orderBy: { dueDate: "asc" },
+  });
+
+  return assignments;
+};
+
 module.exports = {
   getLessons,
   getLessonById,
@@ -356,4 +546,8 @@ module.exports = {
   addLessonMaterial,
   getLessonMaterials,
   deleteLessonMaterial,
+  getStudentLessons,
+  getStudentLessonById,
+  getStudentLessonMaterials,
+  getStudentLessonAssignments,
 };

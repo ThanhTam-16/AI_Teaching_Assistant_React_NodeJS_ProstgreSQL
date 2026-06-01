@@ -15,6 +15,7 @@ const aiRoutes = require("./ai.routes");
 const dashboardRoutes = require("./dashboard.routes");
 const reportRoutes = require("./report.routes");
 const settingRoutes = require("./setting.routes");
+const notificationRoutes = require("./notification.routes");
 
 const router = express.Router();
 
@@ -34,6 +35,7 @@ router.use("/quizzes", quizRoutes);
 router.use("/ai", aiRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/reports", reportRoutes);
+router.use("/notifications", notificationRoutes);
 
 // Admin-specific paths matching original frontend calls
 router.use("/admin/dashboard", dashboardRoutes);

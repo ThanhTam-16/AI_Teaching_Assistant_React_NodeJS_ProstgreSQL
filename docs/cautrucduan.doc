@@ -1,4 +1,4 @@
-AI TEACHING ASSISTANT/
+AI Teaching Assistant/
 │
 ├── backend/
 │   ├── node_modules/                                      // ĐÃ CÓ - thư mục tự sinh, không đẩy lên Git
@@ -28,22 +28,22 @@ AI TEACHING ASSISTANT/
 │   │   │   └── aiGeneration.model.js                      // CHƯA CÓ
 │   │   │
 │   │   ├── controllers/
-│   │   │   ├── ai.controller.js                           // ĐÃ CÓ 
-│   │   │   ├── assignment.controller.js                   // ĐÃ CÓ 
+│   │   │   ├── ai.controller.js                           // ĐÃ CÓ
+│   │   │   ├── assignment.controller.js                   // ĐÃ CÓ
 │   │   │   ├── auth.controller.js                         // ĐÃ CÓ
 │   │   │   ├── class.controller.js                        // ĐÃ CÓ
-│   │   │   ├── clo.controller.js                          // ĐÃ CÓ 
+│   │   │   ├── clo.controller.js                          // ĐÃ CÓ
 │   │   │   ├── dashboard.controller.js                    // ĐÃ CÓ
-│   │   │   ├── feedback.controller.js                     // ĐÃ CÓ 
-│   │   │   ├── grade.controller.js                        // ĐÃ CÓ 
-│   │   │   ├── lesson.controller.js                       // ĐÃ CÓ 
+│   │   │   ├── feedback.controller.js                     // ĐÃ CÓ
+│   │   │   ├── grade.controller.js                        // ĐÃ CÓ
+│   │   │   ├── lesson.controller.js                       // ĐÃ CÓ
+│   │   │   ├── notification.controller.js                 // ĐÃ CÓ
 │   │   │   ├── quiz.controller.js                         // ĐÃ CÓ - file thêm cho quiz
 │   │   │   ├── report.controller.js                       // ĐÃ CÓ - file thêm cho report
 │   │   │   ├── setting.controller.js                      // ĐÃ CÓ
 │   │   │   ├── subject.controller.js                      // ĐÃ CÓ
-│   │   │   ├── submission.controller.js                   // ĐÃ CÓ 
-│   │   │   ├── user.controller.js                         // ĐÃ CÓ
-│   │   │   └── notification.controller.js                 // CHƯA CÓ
+│   │   │   ├── submission.controller.js                   // ĐÃ CÓ
+│   │   │   └── user.controller.js                         // ĐÃ CÓ
 │   │   │
 │   │   ├── middlewares/
 │   │   │   ├── auth.middleware.js                         // ĐÃ CÓ
@@ -53,41 +53,42 @@ AI TEACHING ASSISTANT/
 │   │   │   └── upload.middleware.js                       // CHƯA CÓ
 │   │   │
 │   │   ├── routes/
-│   │   │   ├── ai.routes.js                               // ĐÃ CÓ 
-│   │   │   ├── assignment.routes.js                       // ĐÃ CÓ 
+│   │   │   ├── ai.routes.js                               // ĐÃ CÓ
+│   │   │   ├── assignment.routes.js                       // ĐÃ CÓ
 │   │   │   ├── auth.routes.js                             // ĐÃ CÓ
 │   │   │   ├── class.routes.js                            // ĐÃ CÓ
-│   │   │   ├── clo.routes.js                              // ĐÃ CÓ 
+│   │   │   ├── clo.routes.js                              // ĐÃ CÓ
 │   │   │   ├── dashboard.routes.js                        // ĐÃ CÓ
-│   │   │   ├── feedback.routes.js                         // ĐÃ CÓ 
-│   │   │   ├── grade.routes.js                            // ĐÃ CÓ 
+│   │   │   ├── feedback.routes.js                         // ĐÃ CÓ
+│   │   │   ├── grade.routes.js                            // ĐÃ CÓ
 │   │   │   ├── index.js                                   // ĐÃ CÓ
-│   │   │   ├── lesson.routes.js                           // ĐÃ CÓ 
+│   │   │   ├── lesson.routes.js                           // ĐÃ CÓ
+│   │   │   ├── notification.routes.js                     // ĐÃ CÓ
 │   │   │   ├── quiz.routes.js                             // ĐÃ CÓ - file thêm cho quiz
 │   │   │   ├── report.routes.js                           // ĐÃ CÓ - file thêm cho report
 │   │   │   ├── setting.routes.js                          // ĐÃ CÓ
 │   │   │   ├── subject.routes.js                          // ĐÃ CÓ
-│   │   │   ├── submission.routes.js                       // ĐÃ CÓ 
-│   │   │   ├── user.routes.js                             // ĐÃ CÓ
-│   │   │   └── notification.routes.js                     // CHƯA CÓ
+│   │   │   ├── submission.routes.js                       // ĐÃ CÓ
+│   │   │   └── user.routes.js                             // ĐÃ CÓ
 │   │   │
 │   │   ├── services/
-│   │   │   ├── auth.service.js                            // ĐÃ CÓ
-│   │   │   ├── class.service.js                           // ĐÃ CÓ
-│   │   │   ├── dashboard.service.js                       // ĐÃ CÓ
-│   │   │   ├── setting.service.js                         // ĐÃ CÓ
-│   │   │   ├── subject.service.js                         // ĐÃ CÓ
-│   │   │   ├── user.service.js                            // ĐÃ CÓ
 │   │   │   ├── ai.service.js                              // ĐÃ CÓ
 │   │   │   ├── assignment.service.js                      // ĐÃ CÓ
+│   │   │   ├── auth.service.js                            // ĐÃ CÓ
+│   │   │   ├── class.service.js                           // ĐÃ CÓ
 │   │   │   ├── clo.service.js                             // ĐÃ CÓ
+│   │   │   ├── dashboard.service.js                       // ĐÃ CÓ
 │   │   │   ├── feedback.service.js                        // ĐÃ CÓ
 │   │   │   ├── grade.service.js                           // ĐÃ CÓ
 │   │   │   ├── lesson.service.js                          // ĐÃ CÓ
-│   │   │   ├── quiz.service.js                            // ĐÃ CÓ
-│   │   │   ├── report.service.js                          // ĐÃ CÓ
+│   │   │   ├── notification.service.js                    // ĐÃ CÓ
+│   │   │   ├── quiz.service.js                            // ĐÃ CÓ - file thêm cho quiz
+│   │   │   ├── report.service.js                          // ĐÃ CÓ - file thêm cho report
+│   │   │   ├── setting.service.js                         // ĐÃ CÓ
+│   │   │   ├── studentHelper.service.js                   // ĐÃ CÓ - file thêm hỗ trợ student
+│   │   │   ├── subject.service.js                         // ĐÃ CÓ
 │   │   │   ├── submission.service.js                      // ĐÃ CÓ
-│   │   │   └── notification.service.js                    // CHƯA CÓ
+│   │   │   └── user.service.js                            // ĐÃ CÓ
 │   │   │
 │   │   ├── utils/
 │   │   │   ├── bcrypt.js                                  // ĐÃ CÓ
@@ -98,15 +99,15 @@ AI TEACHING ASSISTANT/
 │   │   │   └── constants.js                               // CHƯA CÓ
 │   │   │
 │   │   ├── validations/
-│   │   │   ├── assignment.validation.js                   // ĐÃ CÓ 
-│   │   │   ├── clo.validation.js                          // ĐÃ CÓ 
-│   │   │   ├── lesson.validation.js                       // ĐÃ CÓ 
+│   │   │   ├── assignment.validation.js                   // ĐÃ CÓ
+│   │   │   ├── clo.validation.js                          // ĐÃ CÓ
+│   │   │   ├── lesson.validation.js                       // ĐÃ CÓ
 │   │   │   ├── setting.validation.js                      // ĐÃ CÓ
 │   │   │   ├── subject.validation.js                      // ĐÃ CÓ
+│   │   │   ├── submission.validation.js                   // ĐÃ CÓ
 │   │   │   ├── user.validation.js                         // ĐÃ CÓ
 │   │   │   ├── auth.validation.js                         // CHƯA CÓ
 │   │   │   ├── class.validation.js                        // CHƯA CÓ
-│   │   │   ├── submission.validation.js                   // CHƯA CÓ
 │   │   │   ├── grade.validation.js                        // CHƯA CÓ
 │   │   │   ├── feedback.validation.js                     // CHƯA CÓ
 │   │   │   ├── quiz.validation.js                         // CHƯA CÓ
@@ -125,14 +126,17 @@ AI TEACHING ASSISTANT/
 │   │
 │   ├── .env                                               // ĐÃ CÓ
 │   ├── .env.example                                       // ĐÃ CÓ
+│   ├── .env.production                                    // ĐÃ CÓ
 │   ├── .gitignore                                         // ĐÃ CÓ
 │   ├── package-lock.json                                  // ĐÃ CÓ
 │   ├── package.json                                       // ĐÃ CÓ
 │   ├── prisma.config.ts                                   // ĐÃ CÓ
 │   └── README.md                                          // CHƯA THẤY TRONG ẢNH MỚI
 │
+├── docs/                                                  // ĐÃ CÓ
+│
 ├── frontend/
-│   ├── dist/                                              // ĐÃ CÓ - thư mục build tự sinh, không cần đẩy lên Git
+│   ├── dist/                                              // ĐÃ CÓ - thư mục build tự sinh, không đẩy lên Git
 │   ├── node_modules/                                      // ĐÃ CÓ - thư mục tự sinh, không đẩy lên Git
 │   │
 │   ├── public/
@@ -144,8 +148,6 @@ AI TEACHING ASSISTANT/
 │   │
 │   ├── src/
 │   │   ├── assets/                                        // ĐÃ CÓ THƯ MỤC
-│   │   │   ├── images/                                    // CHƯA THẤY TRONG ẢNH MỚI
-│   │   │   └── icons/                                     // CHƯA THẤY TRONG ẢNH MỚI
 │   │   │
 │   │   ├── components/
 │   │   │   ├── auth/                                      // ĐÃ CÓ THƯ MỤC, CHƯA THẤY FILE
@@ -155,7 +157,8 @@ AI TEACHING ASSISTANT/
 │   │   │   │
 │   │   │   ├── common/
 │   │   │   │   ├── PageHeader.jsx                         // ĐÃ CÓ
-│   │   │   │   ├── RoleLoading.jsx                        // ĐÃ CÓ - file thêm, dùng loading theo role
+│   │   │   │   ├── PortalDropdown.jsx                     // ĐÃ CÓ - mới thêm
+│   │   │   │   ├── RoleLoading.jsx                        // ĐÃ CÓ
 │   │   │   │   ├── Button.jsx                             // CHƯA CÓ
 │   │   │   │   ├── Input.jsx                              // CHƯA CÓ
 │   │   │   │   ├── Textarea.jsx                           // CHƯA CÓ
@@ -164,7 +167,7 @@ AI TEACHING ASSISTANT/
 │   │   │   │   ├── Table.jsx                              // CHƯA CÓ
 │   │   │   │   ├── Card.jsx                               // CHƯA CÓ
 │   │   │   │   ├── Badge.jsx                              // CHƯA CÓ
-│   │   │   │   ├── Loading.jsx                            // CHƯA CÓ - hiện có RoleLoading.jsx thay thế một phần
+│   │   │   │   ├── Loading.jsx                            // CHƯA CÓ
 │   │   │   │   └── EmptyState.jsx                         // CHƯA CÓ
 │   │   │   │
 │   │   │   └── landing/
@@ -175,21 +178,18 @@ AI TEACHING ASSISTANT/
 │   │   │       ├── Hero.jsx                               // ĐÃ CÓ
 │   │   │       ├── Navbar.jsx                             // ĐÃ CÓ
 │   │   │       ├── Overview.jsx                           // ĐÃ CÓ
-│   │   │       └── TechStack.jsx                          // ĐÃ CÓ 
+│   │   │       └── TechStack.jsx                          // ĐÃ CÓ
 │   │   │
 │   │   ├── contexts/
 │   │   │   ├── AuthContext.jsx                            // ĐÃ CÓ
-│   │   │   └── ThemeContext.jsx                           // ĐÃ CÓ - file thêm cho dark mode/theme
+│   │   │   └── ThemeContext.jsx                           // ĐÃ CÓ
 │   │   │
 │   │   ├── features/
 │   │   │   ├── admin/
 │   │   │   │   ├── components/
 │   │   │   │   │   ├── AdminHeader.jsx                    // ĐÃ CÓ
 │   │   │   │   │   ├── AdminSidebar.jsx                   // ĐÃ CÓ
-│   │   │   │   │   ├── StatCard.jsx                       // ĐÃ CÓ
-│   │   │   │   │   ├── UserTable.jsx                      // CHƯA CÓ
-│   │   │   │   │   ├── UserForm.jsx                       // CHƯA CÓ
-│   │   │   │   │   └── AISettingCard.jsx                  // CHƯA CÓ
+│   │   │   │   │   └── StatCard.jsx                       // ĐÃ CÓ
 │   │   │   │   │
 │   │   │   │   ├── layouts/
 │   │   │   │   │   └── AdminLayout.jsx                    // ĐÃ CÓ
@@ -198,42 +198,39 @@ AI TEACHING ASSISTANT/
 │   │   │   │       ├── AdminOverviewPage.jsx              // ĐÃ CÓ
 │   │   │   │       ├── AISettingsPage.jsx                 // ĐÃ CÓ
 │   │   │   │       ├── LecturerManagementPage.jsx         // ĐÃ CÓ
-│   │   │   │       ├── RolePages.jsx                      // ĐÃ CÓ - file thêm, không nằm trong cấu trúc gốc
+│   │   │   │       ├── RolePages.jsx                      // ĐÃ CÓ
 │   │   │   │       ├── StudentManagementPage.jsx          // ĐÃ CÓ
 │   │   │   │       ├── SubjectManagementPage.jsx          // ĐÃ CÓ
 │   │   │   │       ├── SystemSettingsPage.jsx             // ĐÃ CÓ
 │   │   │   │       └── UserManagementPage.jsx             // ĐÃ CÓ
 │   │   │   │
 │   │   │   ├── lecturer/
-│   │   │   │   ├── layouts/                               // CHƯA CÓ
-│   │   │   │   │   └── LecturerLayout.jsx                 // CHƯA CÓ
-│   │   │   │   ├── components/                            // CHƯA CÓ
-│   │   │   │   │   ├── LecturerSidebar.jsx                // CHƯA CÓ
-│   │   │   │   │   ├── LecturerHeader.jsx                 // CHƯA CÓ
-│   │   │   │   │   ├── ClassCard.jsx                      // CHƯA CÓ
-│   │   │   │   │   ├── SubjectCard.jsx                    // CHƯA CÓ
-│   │   │   │   │   ├── LessonForm.jsx                     // CHƯA CÓ
-│   │   │   │   │   ├── AssignmentForm.jsx                 // CHƯA CÓ
-│   │   │   │   │   ├── SubmissionTable.jsx                // CHƯA CÓ
-│   │   │   │   │   └── AIResultBox.jsx                    // CHƯA CÓ
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── LecturerHeader.jsx                 // ĐÃ CÓ
+│   │   │   │   │   ├── LecturerSidebar.jsx                // ĐÃ CÓ
+│   │   │   │   │   ├── LecturerStatCard.jsx               // ĐÃ CÓ
+│   │   │   │   │   ├── lecturerTokens.js                  // ĐÃ CÓ
+│   │   │   │   │   └── LecturerUI.jsx                     // ĐÃ CÓ
+│   │   │   │   │
+│   │   │   │   ├── layouts/
+│   │   │   │   │   └── LecturerLayout.jsx                 // ĐÃ CÓ
+│   │   │   │   │
 │   │   │   │   └── pages/
+│   │   │   │       ├── ai/
+│   │   │   │       │   └── AIPages.jsx                    // ĐÃ CÓ
+│   │   │   │       ├── AssignmentManagementPage.jsx       // ĐÃ CÓ
+│   │   │   │       ├── ClassManagementPage.jsx            // ĐÃ CÓ
+│   │   │   │       ├── CLOManagementPage.jsx              // ĐÃ CÓ
 │   │   │   │       ├── LecturerOverviewPage.jsx           // ĐÃ CÓ
-│   │   │   │       ├── ClassManagementPage.jsx            // CHƯA CÓ
-│   │   │   │       ├── SubjectManagementPage.jsx          // CHƯA CÓ
-│   │   │   │       ├── CLOManagementPage.jsx              // CHƯA CÓ
-│   │   │   │       ├── LessonManagementPage.jsx           // CHƯA CÓ
-│   │   │   │       ├── AssignmentManagementPage.jsx       // CHƯA CÓ
-│   │   │   │       ├── SubmissionManagementPage.jsx       // CHƯA CÓ
-│   │   │   │       ├── GradingPage.jsx                    // CHƯA CÓ
-│   │   │   │       ├── AIExerciseGeneratorPage.jsx        // CHƯA CÓ
-│   │   │   │       ├── AIQuizGeneratorPage.jsx            // CHƯA CÓ
-│   │   │   │       ├── AIFeedbackGeneratorPage.jsx        // CHƯA CÓ
-│   │   │   │       ├── AISlideGeneratorPage.jsx           // CHƯA CÓ
-│   │   │   │       └── LecturerReportPage.jsx             // CHƯA CÓ
+│   │   │   │       ├── LecturerReportPage.jsx             // ĐÃ CÓ
+│   │   │   │       ├── LecturerSubjectPage.jsx            // ĐÃ CÓ
+│   │   │   │       ├── LessonManagementPage.jsx           // ĐÃ CÓ
+│   │   │   │       └── SubmissionPages.jsx                // ĐÃ CÓ
 │   │   │   │
 │   │   │   └── student/
 │   │   │       ├── layouts/                               // CHƯA CÓ
 │   │   │       │   └── StudentLayout.jsx                  // CHƯA CÓ
+│   │   │       │
 │   │   │       ├── components/                            // CHƯA CÓ
 │   │   │       │   ├── StudentSidebar.jsx                 // CHƯA CÓ
 │   │   │       │   ├── StudentHeader.jsx                  // CHƯA CÓ
@@ -242,6 +239,7 @@ AI TEACHING ASSISTANT/
 │   │   │       │   ├── SubjectCard.jsx                    // CHƯA CÓ
 │   │   │       │   ├── FeedbackCard.jsx                   // CHƯA CÓ
 │   │   │       │   └── ProgressCard.jsx                   // CHƯA CÓ
+│   │   │       │
 │   │   │       └── pages/
 │   │   │           ├── StudentOverviewPage.jsx            // ĐÃ CÓ
 │   │   │           ├── MyClassesPage.jsx                  // CHƯA CÓ
@@ -273,20 +271,21 @@ AI TEACHING ASSISTANT/
 │   │   │   └── student.routes.jsx                         // CHƯA CÓ
 │   │   │
 │   │   ├── services/
-│   │   │   ├── admin.api.js                               // ĐÃ CÓ - file thêm cho admin APIs
+│   │   │   ├── admin.api.js                               // ĐÃ CÓ
+│   │   │   ├── ai.api.js                                  // ĐÃ CÓ
 │   │   │   ├── api.js                                     // ĐÃ CÓ
+│   │   │   ├── assignment.api.js                          // ĐÃ CÓ
 │   │   │   ├── auth.api.js                                // ĐÃ CÓ
-│   │   │   ├── user.api.js                                // ĐÃ CÓ
-│   │   │   ├── class.api.js                               // CHƯA CÓ
-│   │   │   ├── subject.api.js                             // CHƯA CÓ
-│   │   │   ├── clo.api.js                                 // CHƯA CÓ
-│   │   │   ├── lesson.api.js                              // CHƯA CÓ
-│   │   │   ├── assignment.api.js                          // CHƯA CÓ
-│   │   │   ├── submission.api.js                          // CHƯA CÓ
-│   │   │   ├── grade.api.js                               // CHƯA CÓ
-│   │   │   ├── feedback.api.js                            // CHƯA CÓ
-│   │   │   ├── dashboard.api.js                           // CHƯA CÓ - có thể đã gộp trong admin.api.js
-│   │   │   └── ai.api.js                                  // CHƯA CÓ
+│   │   │   ├── class.api.js                               // ĐÃ CÓ
+│   │   │   ├── clo.api.js                                 // ĐÃ CÓ
+│   │   │   ├── dashboard.api.js                           // ĐÃ CÓ
+│   │   │   ├── feedback.api.js                            // ĐÃ CÓ
+│   │   │   ├── grade.api.js                               // ĐÃ CÓ
+│   │   │   ├── lesson.api.js                              // ĐÃ CÓ
+│   │   │   ├── report.api.js                              // ĐÃ CÓ
+│   │   │   ├── subject.api.js                             // ĐÃ CÓ
+│   │   │   ├── submission.api.js                          // ĐÃ CÓ
+│   │   │   └── user.api.js                                // ĐÃ CÓ
 │   │   │
 │   │   ├── utils/
 │   │   │   ├── constants.js                               // ĐÃ CÓ
@@ -302,19 +301,21 @@ AI TEACHING ASSISTANT/
 │   │
 │   ├── .env                                               // ĐÃ CÓ
 │   ├── .env.example                                       // ĐÃ CÓ
+│   ├── .env.production                                    // ĐÃ CÓ
 │   ├── .gitignore                                         // ĐÃ CÓ
-│   ├── eslint.config.js                                   // ĐÃ CÓ 
-│   ├── index.html                                         // ĐÃ CÓ 
-│   ├── package-lock.json                                  // ĐÃ CÓ 
-│   ├── package.json                                       // ĐÃ CÓ 
-│   ├── postcss.config.js                                  // ĐÃ CÓ 
-│   ├── README.md                                          // ĐÃ CÓ 
-│   ├── tailwind.config.js                                 // ĐÃ CÓ 
-│   └── vite.config.js                                     // ĐÃ CÓ 
+│   ├── eslint.config.js                                   // ĐÃ CÓ
+│   ├── index.html                                         // ĐÃ CÓ
+│   ├── package-lock.json                                  // ĐÃ CÓ
+│   ├── package.json                                       // ĐÃ CÓ
+│   ├── postcss.config.js                                  // ĐÃ CÓ
+│   ├── README.md                                          // ĐÃ CÓ
+│   ├── tailwind.config.js                                 // ĐÃ CÓ
+│   ├── vercel.json                                        // ĐÃ CÓ
+│   └── vite.config.js                                     // ĐÃ CÓ
 │
-├── docs/                                                  // ĐÃ CÓ 
 ├── .gitignore                                             // ĐÃ CÓ
-└── package.json                                           // ĐÃ CÓ
+├── package.json                                           // ĐÃ CÓ
+└── README.md                                              // ĐÃ CÓ
 
 docs/
 │

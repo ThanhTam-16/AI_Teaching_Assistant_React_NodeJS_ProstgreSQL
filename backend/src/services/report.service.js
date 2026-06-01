@@ -246,8 +246,173 @@ const getAssignmentReport = async (assignmentId, lecturerId) => {
   };
 };
 
+const calculateProgress = async (studentId, filter = {}) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { studentId },
+    select: { classId: true },
+  });
+  const classIds = enrollments.map((e) => e.classId);
+
+  if (classIds.length === 0) {
+    return {
+      totalAssignments: 0,
+      completedAssignments: 0,
+      missingAssignments: 0,
+      lateSubmissions: 0,
+      gradedAssignments: 0,
+      averageScore: 0,
+      completionRate: 0,
+      weakSubjects: [],
+      recommendedReviewLessons: [],
+    };
+  }
+
+  const where = {
+    classId: { in: classIds },
+    status: { in: ["ASSIGNED", "CLOSED"] },
+  };
+
+  if (filter.classId) {
+    if (!classIds.includes(filter.classId)) {
+      const error = new Error("Access denied: You are not enrolled in this class");
+      error.statusCode = 403;
+      throw error;
+    }
+    where.classId = filter.classId;
+  }
+
+  if (filter.subjectId) {
+    const assigned = await prisma.classSubject.findFirst({
+      where: {
+        subjectId: filter.subjectId,
+        classId: { in: classIds },
+      },
+    });
+    if (!assigned) {
+      const error = new Error("Access denied: Subject is not available in your classes");
+      error.statusCode = 403;
+      throw error;
+    }
+    where.subjectId = filter.subjectId;
+  }
+
+  const assignments = await prisma.assignment.findMany({
+    where,
+    select: { id: true, subjectId: true, lessonId: true },
+  });
+
+  const totalAssignments = assignments.length;
+  const assignmentIds = assignments.map((a) => a.id);
+
+  if (totalAssignments === 0) {
+    return {
+      totalAssignments: 0,
+      completedAssignments: 0,
+      missingAssignments: 0,
+      lateSubmissions: 0,
+      gradedAssignments: 0,
+      averageScore: 0,
+      completionRate: 0,
+      weakSubjects: [],
+      recommendedReviewLessons: [],
+    };
+  }
+
+  const submissions = await prisma.submission.findMany({
+    where: {
+      studentId,
+      assignmentId: { in: assignmentIds },
+    },
+    include: {
+      grade: true,
+      assignment: {
+        select: {
+          subjectId: true,
+          lessonId: true,
+        },
+      },
+    },
+  });
+
+  const completedAssignments = submissions.length;
+  const missingAssignments = Math.max(0, totalAssignments - completedAssignments);
+  const lateSubmissions = submissions.filter((s) => s.status === "LATE").length;
+  const gradedAssignments = submissions.filter((s) => s.grade !== null).length;
+
+  const totalScoreObtained = submissions.reduce((sum, s) => sum + (s.grade ? s.grade.score : 0), 0);
+  const averageScore = gradedAssignments > 0 ? parseFloat((totalScoreObtained / gradedAssignments).toFixed(2)) : 0;
+  const completionRate = totalAssignments > 0 ? parseFloat(((completedAssignments / totalAssignments) * 100).toFixed(2)) : 0;
+
+  const subjectScores = {};
+  for (const s of submissions) {
+    if (s.grade !== null) {
+      const subId = s.assignment.subjectId;
+      if (!subjectScores[subId]) {
+        subjectScores[subId] = [];
+      }
+      subjectScores[subId].push(s.grade.score);
+    }
+  }
+
+  const weakSubjects = [];
+  const subjectDetails = await prisma.subject.findMany({
+    where: { id: { in: Object.keys(subjectScores) } },
+  });
+
+  for (const sub of subjectDetails) {
+    const scores = subjectScores[sub.id];
+    const avg = scores.reduce((sum, sc) => sum + sc, 0) / scores.length;
+    if (avg < 5.0) {
+      weakSubjects.push({
+        id: sub.id,
+        code: sub.code,
+        name: sub.name,
+        averageScore: parseFloat(avg.toFixed(2)),
+      });
+    }
+  }
+
+  const lowScoreLessons = submissions
+    .filter((s) => s.grade !== null && s.grade.score < 5.0 && s.assignment.lessonId)
+    .map((s) => s.assignment.lessonId);
+
+  const recommendedReviewLessons = lowScoreLessons.length > 0
+    ? await prisma.lesson.findMany({
+        where: { id: { in: lowScoreLessons } },
+        select: { id: true, title: true, chapter: true, subjectId: true },
+      })
+    : [];
+
+  return {
+    totalAssignments,
+    completedAssignments,
+    missingAssignments,
+    lateSubmissions,
+    gradedAssignments,
+    averageScore,
+    completionRate,
+    weakSubjects,
+    recommendedReviewLessons,
+  };
+};
+
+const getStudentProgress = async (studentId) => {
+  return calculateProgress(studentId);
+};
+
+const getStudentSubjectProgress = async (studentId, subjectId) => {
+  return calculateProgress(studentId, { subjectId });
+};
+
+const getStudentClassProgress = async (studentId, classId) => {
+  return calculateProgress(studentId, { classId });
+};
+
 module.exports = {
   getOverviewReport,
   getClassReport,
   getAssignmentReport,
+  getStudentProgress,
+  getStudentSubjectProgress,
+  getStudentClassProgress,
 };

@@ -32,5 +32,6 @@ router.get("/overview", checkRole, (req, res, next) => {
 // Module paths (for mounting under /dashboard)
 router.get("/admin/overview", authorizeRoles("ADMIN"), dashboardController.getStats);
 router.get("/lecturer/overview", authorizeRoles("LECTURER"), dashboardController.getLecturerStats);
+router.get("/student/overview", authorizeRoles("STUDENT"), dashboardController.getStudentStats);
 
 module.exports = router;
