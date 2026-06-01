@@ -157,7 +157,7 @@ AI Teaching Assistant/
 │   │   │   │
 │   │   │   ├── common/
 │   │   │   │   ├── PageHeader.jsx                         // ĐÃ CÓ
-│   │   │   │   ├── PortalDropdown.jsx                     // ĐÃ CÓ - mới thêm
+│   │   │   │   ├── PortalDropdown.jsx                     // ĐÃ CÓ 
 │   │   │   │   ├── RoleLoading.jsx                        // ĐÃ CÓ
 │   │   │   │   ├── Button.jsx                             // CHƯA CÓ
 │   │   │   │   ├── Input.jsx                              // CHƯA CÓ
@@ -228,27 +228,25 @@ AI Teaching Assistant/
 │   │   │   │       └── SubmissionPages.jsx                // ĐÃ CÓ
 │   │   │   │
 │   │   │   └── student/
-│   │   │       ├── layouts/                               // CHƯA CÓ
-│   │   │       │   └── StudentLayout.jsx                  // CHƯA CÓ
+│   │   │       ├── components/
+│   │   │       │   ├── StudentHeader.jsx                  // ĐÃ CÓ 
+│   │   │       │   ├── StudentSidebar.jsx                 // ĐÃ CÓ 
+│   │   │       │   ├── StudentUI.jsx                      // ĐÃ CÓ 
+│   │   │       │   └── studentTokens.js                   // ĐÃ CÓ 
 │   │   │       │
-│   │   │       ├── components/                            // CHƯA CÓ
-│   │   │       │   ├── StudentSidebar.jsx                 // CHƯA CÓ
-│   │   │       │   ├── StudentHeader.jsx                  // CHƯA CÓ
-│   │   │       │   ├── AssignmentCard.jsx                 // CHƯA CÓ
-│   │   │       │   ├── LessonCard.jsx                     // CHƯA CÓ
-│   │   │       │   ├── SubjectCard.jsx                    // CHƯA CÓ
-│   │   │       │   ├── FeedbackCard.jsx                   // CHƯA CÓ
-│   │   │       │   └── ProgressCard.jsx                   // CHƯA CÓ
+│   │   │       ├── layouts/
+│   │   │       │   └── StudentLayout.jsx                  // ĐÃ CÓ 
 │   │   │       │
 │   │   │       └── pages/
+│   │   │           ├── AssignmentsPage.jsx                // ĐÃ CÓ 
+│   │   │           ├── FeedbackPage.jsx                   // ĐÃ CÓ 
+│   │   │           ├── LessonsPage.jsx                    // ĐÃ CÓ 
+│   │   │           ├── MyClassPage.jsx                    // ĐÃ CÓ 
+│   │   │           ├── MySubjectPage.jsx                  // ĐÃ CÓ 
+│   │   │           ├── NotificationsPage.jsx              // ĐÃ CÓ 
+│   │   │           ├── ProgressPage.jsx                   // ĐÃ CÓ 
 │   │   │           ├── StudentOverviewPage.jsx            // ĐÃ CÓ
-│   │   │           ├── MyClassesPage.jsx                  // CHƯA CÓ
-│   │   │           ├── MySubjectsPage.jsx                 // CHƯA CÓ
-│   │   │           ├── LessonsPage.jsx                    // CHƯA CÓ
-│   │   │           ├── AssignmentsPage.jsx                // CHƯA CÓ
-│   │   │           ├── SubmitAssignmentPage.jsx           // CHƯA CÓ
-│   │   │           ├── FeedbackPage.jsx                   // CHƯA CÓ
-│   │   │           └── ProgressPage.jsx                   // CHƯA CÓ
+│   │   │           └── SubmitAssignmentPage.jsx           // ĐÃ CÓ 
 │   │   │
 │   │   ├── hooks/
 │   │   │   ├── useAuth.js                                 // ĐÃ CÓ
@@ -282,7 +280,10 @@ AI Teaching Assistant/
 │   │   │   ├── feedback.api.js                            // ĐÃ CÓ
 │   │   │   ├── grade.api.js                               // ĐÃ CÓ
 │   │   │   ├── lesson.api.js                              // ĐÃ CÓ
+│   │   │   ├── notification.api.js                        // ĐÃ CÓ 
+│   │   │   ├── quiz.api.js                                // ĐÃ CÓ 
 │   │   │   ├── report.api.js                              // ĐÃ CÓ
+│   │   │   ├── student.api.js                             // ĐÃ CÓ 
 │   │   │   ├── subject.api.js                             // ĐÃ CÓ
 │   │   │   ├── submission.api.js                          // ĐÃ CÓ
 │   │   │   └── user.api.js                                // ĐÃ CÓ
