@@ -37,6 +37,7 @@ const NAV = [
       { label: 'AI Bài tập', href: '/lecturer/ai/exercises', icon: Sparkles },
       { label: 'AI Quiz',    href: '/lecturer/ai/quizzes',   icon: Star },
       { label: 'AI Feedback',href: '/lecturer/ai/feedback',  icon: Target },
+      { label: 'AI Giáo án', href: '/lecturer/ai/lesson-outline', icon: BookOpen },
       { label: 'AI Slide',   href: '/lecturer/ai/slides',    icon: FileText },
     ],
   },

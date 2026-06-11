@@ -1,50 +1,6 @@
 const prisma = require("../config/database");
-
-const callGemini = async (prompt, systemInstruction) => {
-  const apiKey = process.env.AI_API_KEY;
-  if (!apiKey) {
-    return null;
-  }
-
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: `${systemInstruction ? `${systemInstruction}\n\n` : ""}Prompt: ${prompt}`
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          responseMimeType: "application/json"
-        }
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("Gemini API Error response:", errText);
-      return null;
-    }
-
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (text) {
-      return JSON.parse(text);
-    }
-  } catch (error) {
-    console.error("Exception calling Gemini API:", error);
-  }
-  return null;
-};
+const aiPromptService = require("./aiPrompt.service");
+const aiProviderService = require("./aiProvider.service");
 
 const logGeneration = async ({ type, prompt, result, status, errorMessage, userId }) => {
   try {
@@ -53,8 +9,8 @@ const logGeneration = async ({ type, prompt, result, status, errorMessage, userI
         type,
         prompt,
         result: result || null,
-        status,
-        errorMessage,
+        status: status || "SUCCESS",
+        errorMessage: errorMessage || null,
         userId,
       },
     });
@@ -63,210 +19,290 @@ const logGeneration = async ({ type, prompt, result, status, errorMessage, userI
   }
 };
 
-const generateExercises = async (prompt, userId) => {
-  const systemInstruction = "You are an AI teaching assistant. Generate a list of exercises based on the prompt. Return JSON format: { \"exercises\": [ { \"title\": \"...\", \"description\": \"...\", \"difficulty\": \"EASY/MEDIUM/HARD\", \"requirements\": \"...\" } ] }";
-  
-  let result = await callGemini(prompt, systemInstruction);
+const handleAIGeneration = async ({ type, input, promptBuilder, providerCall, userId }) => {
+  const { prompt, systemInstruction } = promptBuilder(input);
+  let result = null;
   let status = "SUCCESS";
   let errorMessage = null;
 
-  if (!result) {
-    result = {
-      exercises: [
-        {
-          title: "Bài tập 1: Tạo API Endpoint đầu tiên",
-          description: "Tạo một route trong ExpressJS nhận phương thức POST và trả về JSON chào mừng.",
-          difficulty: "EASY",
-          requirements: "Sử dụng ExpressJS Router, xử lý req.body và trả về response đúng format."
-        },
-        {
-          title: "Bài tập 2: Quản lý mối quan hệ Prisma",
-          description: "Triển khai một câu truy vấn Prisma kết nối nhiều bảng.",
-          difficulty: "MEDIUM",
-          requirements: "Dùng findUnique hoặc findFirst kết hợp lệnh include để kéo dữ liệu quan hệ kèm phân trang."
+  try {
+    result = await providerCall(input, prompt, systemInstruction);
+  } catch (error) {
+    status = "FAILED";
+    errorMessage = error.message || "Unknown AI error";
+    console.error(`Error in generate AI type: ${type}:`, error);
+
+    // Fallback if AI_MOCK_MODE is enabled as a safeguard
+    const aiConfig = require("../config/ai.config");
+    if (aiConfig.mockMode) {
+      console.log(`Fallback to Mock for type: ${type} due to Gemini API failure.`);
+      status = "SUCCESS"; // treat mock fallback as success for logging
+      try {
+        const mockProvider = require("./providers/mock.provider");
+        if (type === "EXERCISE") {
+          result = mockProvider.generateMockExercises(input.topic, input.difficulty, input.numberOfExercises);
+        } else if (type === "QUIZ") {
+          result = mockProvider.generateMockQuiz(input.topic, input.difficulty, input.numberOfQuestions, input.questionType);
+        } else if (type === "FEEDBACK") {
+          result = mockProvider.generateMockFeedback(input.submissionContent, input.assignmentContext, input.studentLevel);
+        } else if (type === "LESSON_OUTLINE") {
+          result = mockProvider.generateMockLessonOutline(input.topic, input.numberOfSections);
+        } else if (type === "SLIDE_OUTLINE") {
+          result = mockProvider.generateMockSlideOutline(input.topic, input.numberOfSlides);
         }
-      ]
-    };
-  }
-
-  await logGeneration({
-    type: "EXERCISE",
-    prompt,
-    result,
-    status,
-    errorMessage,
-    userId,
-  });
-
-  return result;
-};
-
-const generateQuiz = async (prompt, userId) => {
-  const systemInstruction = "Generate a quiz with questions. Return JSON format: { \"quiz\": { \"title\": \"...\", \"description\": \"...\", \"questions\": [ { \"questionText\": \"...\", \"questionType\": \"MULTIPLE_CHOICE/TRUE_FALSE/SHORT_ANSWER\", \"options\": [\"Option A\", \"Option B\", \"Option C\", \"Option D\"], \"correctAnswer\": \"...\", \"explanation\": \"...\" } ] } }";
-
-  let result = await callGemini(prompt, systemInstruction);
-  let status = "SUCCESS";
-  let errorMessage = null;
-
-  if (!result) {
-    result = {
-      quiz: {
-        title: "Quiz ôn tập trắc nghiệm kiến thức lập trình",
-        description: "Các câu hỏi kiểm tra kiến thức lập trình backend",
-        questions: [
-          {
-            questionText: "Trong NodeJS, phương thức nào để đăng ký một middleware?",
-            questionType: "MULTIPLE_CHOICE",
-            options: [
-              "app.use()",
-              "app.register()",
-              "app.middleware()",
-              "app.add()"
-            ],
-            correctAnswer: "app.use()",
-            explanation: "app.use() được dùng để đăng ký middleware toàn cục hoặc cho một tiền tố đường dẫn cụ thể."
-          },
-          {
-            questionText: "RESTful API chỉ hỗ trợ định dạng dữ liệu là JSON đúng hay sai?",
-            questionType: "TRUE_FALSE",
-            options: ["Đúng", "Sai"],
-            correctAnswer: "Sai",
-            explanation: "RESTful API có thể trả về XML, HTML, Plain text hoặc các định dạng khác tùy vào header Accept."
-          }
-        ]
+      } catch (mockError) {
+        status = "FAILED";
+        errorMessage = `Failed to get mock: ${mockError.message}`;
       }
-    };
+    }
+
+    if (status === "FAILED") {
+      await logGeneration({ type, prompt, result: null, status, errorMessage, userId });
+      throw error;
+    }
   }
 
-  await logGeneration({
+  const record = await logGeneration({ type, prompt, result, status, errorMessage, userId });
+  if (result && typeof result === "object") {
+    return {
+      generationId: record?.id,
+      ...result
+    };
+  }
+  return result;
+};
+
+const generateExercises = async (input, userId) => {
+  return await handleAIGeneration({
+    type: "EXERCISE",
+    input,
+    promptBuilder: aiPromptService.buildExercisePrompt,
+    providerCall: aiProviderService.generateExercises,
+    userId,
+  });
+};
+
+const generateQuiz = async (input, userId) => {
+  return await handleAIGeneration({
     type: "QUIZ",
-    prompt,
-    result,
-    status,
-    errorMessage,
+    input,
+    promptBuilder: aiPromptService.buildQuizPrompt,
+    providerCall: aiProviderService.generateQuiz,
     userId,
   });
-
-  return result;
 };
 
-const generateFeedback = async (prompt, userId) => {
-  const systemInstruction = "Evaluate the student's submission content/code and provide feedback. Return JSON format: { \"scoreSuggestion\": 8.5, \"generalFeedback\": \"...\", \"improvementAreas\": \"...\" }";
-
-  let result = await callGemini(prompt, systemInstruction);
-  let status = "SUCCESS";
-  let errorMessage = null;
-
-  if (!result) {
-    result = {
-      scoreSuggestion: 8.5,
-      generalFeedback: "Bài làm rất chỉn chu. Mã nguồn được tổ chức tốt theo mô hình MVC, tách biệt rõ ràng giữa Router, Controller và Service.",
-      improvementAreas: "Nên bổ sung thêm validate dữ liệu đầu vào cho các trường tùy chọn để phòng tránh lỗi cơ sở dữ liệu."
-    };
-  }
-
-  await logGeneration({
+const generateFeedback = async (input, userId) => {
+  return await handleAIGeneration({
     type: "FEEDBACK",
-    prompt,
-    result,
-    status,
-    errorMessage,
+    input,
+    promptBuilder: aiPromptService.buildFeedbackPrompt,
+    providerCall: aiProviderService.generateFeedback,
     userId,
   });
-
-  return result;
 };
 
-const generateLessonOutline = async (prompt, userId) => {
-  const systemInstruction = "Generate a detailed lesson outline. Return JSON format: { \"title\": \"...\", \"outline\": [ { \"heading\": \"...\", \"subsections\": [\"...\", \"...\"], \"durationMinutes\": 15 } ] }";
-
-  let result = await callGemini(prompt, systemInstruction);
-  let status = "SUCCESS";
-  let errorMessage = null;
-
-  if (!result) {
-    result = {
-      title: "Đề cương bài học chuẩn bị bởi AI",
-      outline: [
-        {
-          heading: "1. Giới thiệu mô hình RESTful API",
-          subsections: [
-            "Các phương thức HTTP (GET, POST, PUT, DELETE)",
-            "Mã trạng thái HTTP (200, 201, 400, 401, 403, 404, 500)",
-            "Đặc trưng không lưu trạng thái (Statelessness)"
-          ],
-          durationMinutes: 20
-        },
-        {
-          heading: "2. Thực hành xây dựng API",
-          subsections: [
-            "Khởi tạo project ExpressJS mới",
-            "Cài đặt nodemon và các package cần thiết",
-            "Viết router test"
-          ],
-          durationMinutes: 40
-        }
-      ]
-    };
-  }
-
-  await logGeneration({
+const generateLessonOutline = async (input, userId) => {
+  return await handleAIGeneration({
     type: "LESSON_OUTLINE",
-    prompt,
-    result,
-    status,
-    errorMessage,
+    input,
+    promptBuilder: aiPromptService.buildLessonOutlinePrompt,
+    providerCall: aiProviderService.generateLessonOutline,
     userId,
   });
-
-  return result;
 };
 
-const generateSlideOutline = async (prompt, userId) => {
-  const systemInstruction = "Generate slide presentation structure. Return JSON format: { \"presentationTitle\": \"...\", \"slides\": [ { \"slideNumber\": 1, \"title\": \"...\", \"bulletPoints\": [\"...\", \"...\"], \"visualNotes\": \"...\" } ] }";
-
-  let result = await callGemini(prompt, systemInstruction);
-  let status = "SUCCESS";
-  let errorMessage = null;
-
-  if (!result) {
-    result = {
-      presentationTitle: "Thiết kế Slide bài giảng: Cơ chế hoạt động của Event Loop",
-      slides: [
-        {
-          slideNumber: 1,
-          title: "Giới thiệu Event Loop",
-          bulletPoints: [
-            "NodeJS là đơn luồng (Single Threaded)",
-            "Làm thế nào NodeJS xử lý hàng ngàn request cùng lúc?",
-            "Vai trò của Event Loop trong môi trường NodeJS"
-          ],
-          visualNotes: "Đặt biểu tượng NodeJS ở giữa, bao quanh bởi các mũi tên tạo thành một vòng lặp liên tục."
-        },
-        {
-          slideNumber: 2,
-          title: "Các hàng đợi trong Event Loop",
-          bulletPoints: [
-            "Hàng đợi Microtask (nextTick, Promise)",
-            "Hàng đợi Timers (setTimeout, setInterval)",
-            "Hàng đợi Poll và Check"
-          ],
-          visualNotes: "Vẽ sơ đồ phân cấp các ngăn xếp/hàng đợi từ trên xuống dưới theo thứ tự ưu tiên."
-        }
-      ]
-    };
-  }
-
-  await logGeneration({
+const generateSlideOutline = async (input, userId) => {
+  return await handleAIGeneration({
     type: "SLIDE_OUTLINE",
-    prompt,
-    result,
-    status,
-    errorMessage,
+    input,
+    promptBuilder: aiPromptService.buildSlideOutlinePrompt,
+    providerCall: aiProviderService.generateSlideOutline,
     userId,
   });
+};
 
-  return result;
+const getAIHistory = async (userId, query = {}) => {
+  const { type, status } = query;
+  const where = { userId };
+
+  if (type) {
+    where.type = type;
+  }
+  if (status) {
+    where.status = status;
+  }
+
+  const history = await prisma.aIGeneration.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+  });
+
+  return history;
+};
+
+const getAIHistoryById = async (userId, id) => {
+  const log = await prisma.aIGeneration.findFirst({
+    where: { id, userId },
+  });
+
+  if (!log) {
+    const error = new Error("AI Generation log not found or access denied");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return log;
+};
+
+const saveExerciseAsAssignment = async (userId, data) => {
+  const { aiGenerationId, exerciseIndex, classId, subjectId, lessonId, cloId, dueDate, totalScore } = data;
+
+  const generation = await getAIHistoryById(userId, aiGenerationId);
+
+  if (generation.type !== "EXERCISE") {
+    const error = new Error("Invalid generation type. Log must be an EXERCISE");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const result = typeof generation.result === "string" ? JSON.parse(generation.result) : generation.result;
+  const exercises = result?.exercises || [];
+  const exercise = exercises[exerciseIndex];
+
+  if (!exercise) {
+    const error = new Error("Selected exercise index not found in generated results");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const requirementsString = Array.isArray(exercise.requirements)
+    ? exercise.requirements.join("\n")
+    : exercise.requirements || "";
+
+  let desc = exercise.description || "";
+  if (exercise.rubric && Array.isArray(exercise.rubric)) {
+    desc += "\n\n**Rubric chấm điểm:**\n" + exercise.rubric.map(r => `- ${r.criteria}: ${r.points}đ`).join("\n");
+  }
+
+  const assignmentData = {
+    title: exercise.title || `AI Bài tập về ${generation.prompt?.slice(0, 30) || "chủ đề"}`,
+    description: desc,
+    requirements: requirementsString,
+    dueDate,
+    totalScore: totalScore !== undefined ? parseFloat(totalScore) : 10,
+    difficulty: exercise.difficulty || "MEDIUM",
+    submissionType: "TEXT",
+    status: "DRAFT",
+    subjectId,
+    classId,
+    lessonId,
+    cloId,
+  };
+
+  const assignmentService = require("./assignment.service");
+  return await assignmentService.createAssignment(assignmentData, userId);
+};
+
+const saveQuiz = async (userId, data) => {
+  const { aiGenerationId, subjectId, lessonId, title } = data;
+
+  const generation = await getAIHistoryById(userId, aiGenerationId);
+
+  if (generation.type !== "QUIZ") {
+    const error = new Error("Invalid generation type. Log must be a QUIZ");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const result = typeof generation.result === "string" ? JSON.parse(generation.result) : generation.result;
+  const questions = result?.questions || [];
+
+  const quizService = require("./quiz.service");
+  const quiz = await quizService.createQuiz({
+    title: title || result?.quizTitle || `AI Quiz về ${generation.prompt?.slice(0, 30) || "chủ đề"}`,
+    difficulty: "MEDIUM",
+    subjectId,
+    lessonId
+  }, userId);
+
+  for (const q of questions) {
+    let qType = q.questionType || "MULTIPLE_CHOICE";
+    if (!["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER"].includes(qType)) {
+      qType = "MULTIPLE_CHOICE";
+    }
+
+    await quizService.addQuizQuestion(quiz.id, {
+      questionText: q.questionText || "Câu hỏi trống",
+      questionType: qType,
+      options: q.options || [],
+      correctAnswer: q.correctAnswer || "",
+      explanation: q.explanation || "",
+    }, userId);
+  }
+
+  return await quizService.getQuizById(quiz.id, userId);
+};
+
+const saveLessonOutline = async (userId, data) => {
+  const { aiGenerationId, subjectId, cloId, chapter } = data;
+
+  const generation = await getAIHistoryById(userId, aiGenerationId);
+
+  if (generation.type !== "LESSON_OUTLINE") {
+    const error = new Error("Invalid generation type. Log must be a LESSON_OUTLINE");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const result = typeof generation.result === "string" ? JSON.parse(generation.result) : generation.result;
+
+  let contentStr = "";
+  if (result.sections && Array.isArray(result.sections)) {
+    contentStr += "NỘI DUNG CHI TIẾT BÀI GIẢNG:\n\n";
+    result.sections.forEach((sec, idx) => {
+      contentStr += `${idx + 1}. ${sec.heading}\n`;
+      contentStr += `   Tóm tắt: ${sec.summary || ""}\n`;
+      if (sec.keyPoints && Array.isArray(sec.keyPoints)) {
+        contentStr += "   Các điểm chính:\n";
+        sec.keyPoints.forEach(kp => {
+          contentStr += `   - ${kp}\n`;
+        });
+      }
+      contentStr += "\n";
+    });
+  }
+
+  if (result.keyConcepts && Array.isArray(result.keyConcepts)) {
+    contentStr += "\nCÁC KHÁI NIỆM CỐT LÕI:\n";
+    result.keyConcepts.forEach(c => {
+      contentStr += `- ${c}\n`;
+    });
+  }
+
+  if (result.activities && Array.isArray(result.activities)) {
+    contentStr += "\nHOẠT ĐỘNG TRÊN LỚP:\n";
+    result.activities.forEach(act => {
+      contentStr += `- ${act}\n`;
+    });
+  }
+
+  if (result.assessmentSuggestion) {
+    contentStr += `\nGỢI Ý ĐÁNH GIÁ:\n${result.assessmentSuggestion}\n`;
+  }
+
+  const lessonData = {
+    title: result.title || `AI Giáo án về ${generation.prompt?.slice(0, 30) || "chủ đề"}`,
+    chapter: chapter || "1",
+    description: result.objectives ? result.objectives.join("\n") : "Giáo án tự động tạo bởi AI.",
+    content: contentStr,
+    status: "DRAFT",
+    subjectId,
+    cloId
+  };
+
+  const lessonService = require("./lesson.service");
+  return await lessonService.createLesson(lessonData, userId);
 };
 
 module.exports = {
@@ -275,4 +311,9 @@ module.exports = {
   generateFeedback,
   generateLessonOutline,
   generateSlideOutline,
+  getAIHistory,
+  getAIHistoryById,
+  saveExerciseAsAssignment,
+  saveQuiz,
+  saveLessonOutline,
 };

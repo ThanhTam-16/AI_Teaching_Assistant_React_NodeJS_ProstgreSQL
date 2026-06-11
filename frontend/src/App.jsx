@@ -36,6 +36,7 @@ import {
   AIQuizGeneratorPage,
   AIFeedbackGeneratorPage,
   AISlideGeneratorPage,
+  AILessonOutlineGeneratorPage,
 } from './features/lecturer/pages/ai/AIPages'
 import LecturerReportPage from './features/lecturer/pages/LecturerReportPage'
 
@@ -115,6 +116,7 @@ export default function App() {
               <Route path="ai/quizzes"            element={<AIQuizGeneratorPage />} />
               <Route path="ai/feedback"           element={<AIFeedbackGeneratorPage />} />
               <Route path="ai/slides"             element={<AISlideGeneratorPage />} />
+              <Route path="ai/lesson-outline"     element={<AILessonOutlineGeneratorPage />} />
               <Route path="reports"               element={<LecturerReportPage />} />
             </Route>
 
