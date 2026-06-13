@@ -97,14 +97,14 @@ export default function CLOManagementPage() {
   const [saving, setSaving] = useState(false)
   const [modalErr, setModalErr] = useState('')
 
-  const fetch = useCallback(async () => {
+  const fetch = useCallback(async (overrideSubjectId) => {
     setLoading(true)
     try {
       const subRes = await getLecturerSubjects()
       const subs = subRes.data.data?.subjects ?? subRes.data.data ?? []
       setSubjects(subs)
 
-      let activeSubjectId = subjectFilter
+      let activeSubjectId = overrideSubjectId !== undefined ? overrideSubjectId : subjectFilter
       if (!activeSubjectId && subs.length > 0) {
         activeSubjectId = subs[0].id
         setSubjectFilter(subs[0].id)
@@ -132,9 +132,21 @@ export default function CLOManagementPage() {
   const handleSave = async (form) => {
     setSaving(true); setModalErr('')
     try {
-      if (modal.type === 'create') { await createCLO(form); toast.success('Thêm CLO thành công!') }
-      else { await updateCLO(modal.data.id, form); toast.success('Cập nhật CLO thành công!') }
-      setModal(null); fetch()
+      if (modal.type === 'create') { 
+        await createCLO(form)
+        toast.success('Thêm CLO thành công!') 
+      }
+      else { 
+        await updateCLO(modal.data.id, form)
+        toast.success('Cập nhật CLO thành công!') 
+      }
+      setModal(null)
+      if (form.subjectId && form.subjectId !== subjectFilter) {
+        setSubjectFilter(form.subjectId)
+        fetch(form.subjectId)
+      } else {
+        fetch()
+      }
     } catch (e) { setModalErr(e.response?.data?.message ?? 'Đã có lỗi.') }
     finally { setSaving(false) }
   }
@@ -155,7 +167,7 @@ export default function CLOManagementPage() {
         description="Chuẩn đầu ra học phần"
         stats={[{ label: 'Tổng', value: clos.length }]}
         actions={
-          <button onClick={() => { setModal({ type: 'create' }); setModalErr('') }}
+          <button onClick={() => { setModal({ type: 'create', data: { subjectId: subjectFilter } }); setModalErr('') }}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-all shadow-sm">
             <Plus size={13} /> Thêm CLO
           </button>
@@ -189,7 +201,7 @@ export default function CLOManagementPage() {
         </div>
       ) : clos.length === 0 ? (
         <EmptyState icon={Target} title="Chưa có CLO nào" sub="Thêm CLO để xác định chuẩn đầu ra"
-          action={<button onClick={() => setModal({ type: 'create' })} className="px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-all">Thêm CLO</button>} />
+          action={<button onClick={() => setModal({ type: 'create', data: { subjectId: subjectFilter } })} className="px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-all">Thêm CLO</button>} />
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {clos.map(c => {
@@ -252,7 +264,7 @@ export default function CLOManagementPage() {
         </div>
       )}
 
-      {modal?.type === 'create' && <CLOModal mode="create" subjects={subjects} onClose={() => setModal(null)} onSave={handleSave} saving={saving} error={modalErr} />}
+      {modal?.type === 'create' && <CLOModal mode="create" initial={modal.data} subjects={subjects} onClose={() => setModal(null)} onSave={handleSave} saving={saving} error={modalErr} />}
       {modal?.type === 'edit' && <CLOModal mode="edit" initial={modal.data} subjects={subjects} onClose={() => setModal(null)} onSave={handleSave} saving={saving} error={modalErr} />}
       {modal?.type === 'delete' && <DeleteModal clo={modal.data} onClose={() => setModal(null)} onConfirm={handleDelete} deleting={saving} />}
     </div>

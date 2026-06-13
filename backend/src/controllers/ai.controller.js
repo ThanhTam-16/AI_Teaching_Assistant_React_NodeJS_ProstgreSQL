@@ -102,6 +102,17 @@ const saveLessonOutline = async (req, res, next) => {
   }
 };
 
+const deleteAIHistory = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const result = await aiService.deleteAIHistory(userId, id);
+    return successResponse(res, "AI history record deleted successfully", result, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   generateExercises,
   generateQuiz,
@@ -113,4 +124,5 @@ module.exports = {
   saveExerciseAsAssignment,
   saveQuiz,
   saveLessonOutline,
+  deleteAIHistory,
 };

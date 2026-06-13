@@ -115,9 +115,30 @@ const getStudentsInClass = async (req, res, next) => {
 const addStudentToClass = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { studentId } = req.body;
+    const { studentId, email } = req.body;
     const lecturerId = req.user.id;
-    const student = await classService.addStudentToClass(id, studentId, lecturerId);
+
+    let targetStudentId = studentId;
+    if (email && !targetStudentId) {
+      const prisma = require("../config/database");
+      const user = await prisma.user.findFirst({
+        where: { email: email.trim(), role: "STUDENT" },
+      });
+      if (!user) {
+        const error = new Error("Student not found with this email");
+        error.statusCode = 404;
+        throw error;
+      }
+      targetStudentId = user.id;
+    }
+
+    if (!targetStudentId) {
+      const error = new Error("Student ID or email is required");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const student = await classService.addStudentToClass(id, targetStudentId, lecturerId);
 
     return successResponse(res, "Student added to class successfully", student, 201);
   } catch (error) {
@@ -170,6 +191,31 @@ const getStudentClassById = async (req, res, next) => {
   }
 };
 
+const getLecturerClassProgress = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { subjectId } = req.query;
+    const lecturerId = req.user.id;
+    const progress = await classService.getLecturerClassProgress(id, lecturerId, subjectId);
+
+    return successResponse(res, "Class progress fetched successfully", progress, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentProgressInClass = async (req, res, next) => {
+  try {
+    const { id, studentId } = req.params;
+    const lecturerId = req.user.id;
+    const progress = await classService.getStudentProgressInClass(id, studentId, lecturerId);
+
+    return successResponse(res, "Student progress in class fetched successfully", progress, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getClasses,
   getClassById,
@@ -183,4 +229,6 @@ module.exports = {
   removeStudentFromClass,
   getStudentClasses,
   getStudentClassById,
+  getLecturerClassProgress,
+  getStudentProgressInClass,
 };

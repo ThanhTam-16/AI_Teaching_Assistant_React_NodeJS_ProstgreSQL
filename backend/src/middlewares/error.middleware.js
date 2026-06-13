@@ -7,11 +7,18 @@ const notFound = (req, res, next) => {
 };
 
 const errorHandler = (error, req, res, next) => {
-  const statusCode = error.statusCode || 500;
+  let statusCode = error.statusCode || 500;
+  let message = error.message || "Internal server error";
+
+  // Prisma foreign key constraint violation or DB connection/constraint issue
+  if (error.code === "P2003" || (message && message.includes("Foreign key constraint violated"))) {
+    statusCode = 400;
+    message = "Lỗi liên kết dữ liệu: Mã bài giảng hoặc mã môn học được chọn không tồn tại hoặc không hợp lệ.";
+  }
 
   return errorResponse(
     res,
-    error.message || "Internal server error",
+    message,
     statusCode,
     process.env.NODE_ENV === "development" ? error.stack : null
   );

@@ -8,6 +8,7 @@ export const generateSlideOutline       = (data) => api.post('/lecturer/ai/slide
 
 export const getAIHistory               = (params) => api.get('/lecturer/ai/history', { params })
 export const getAIHistoryById           = (id) => api.get(`/lecturer/ai/history/${id}`)
+export const deleteAIHistory           = (id) => api.delete(`/lecturer/ai/history/${id}`)
 
 export const saveAIExerciseAsAssignment = (data) => api.post('/lecturer/ai/exercises/save-assignment', data)
 export const saveAIQuiz                 = (data) => api.post('/lecturer/ai/quizzes/save', data)

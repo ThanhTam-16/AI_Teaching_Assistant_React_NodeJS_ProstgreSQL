@@ -33,8 +33,10 @@ router.patch("/admin/features/:id/status", authorizeRoles("ADMIN"), settingContr
 // --- Lecturer AI History Endpoints ---
 router.get("/history", authorizeRoles("LECTURER"), aiController.getAIHistory);
 router.get("/history/:id", authorizeRoles("LECTURER"), aiController.getAIHistoryById);
+router.delete("/history/:id", authorizeRoles("LECTURER"), aiController.deleteAIHistory);
 router.get("/lecturer/history", authorizeRoles("LECTURER"), aiController.getAIHistory);
 router.get("/lecturer/history/:id", authorizeRoles("LECTURER"), aiController.getAIHistoryById);
+router.delete("/lecturer/history/:id", authorizeRoles("LECTURER"), aiController.deleteAIHistory);
 
 // --- Lecturer AI Generation Endpoints ---
 // Root paths (compatibility for mounting under /lecturer/ai)

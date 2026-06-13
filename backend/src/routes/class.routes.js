@@ -31,6 +31,8 @@ router.patch("/lecturer/:id/status", authorizeRoles("LECTURER"), classController
 router.get("/lecturer/:id/students", authorizeRoles("LECTURER"), classController.getStudentsInClass);
 router.post("/lecturer/:id/students", authorizeRoles("LECTURER"), classController.addStudentToClass);
 router.delete("/lecturer/:id/students/:studentId", authorizeRoles("LECTURER"), classController.removeStudentFromClass);
+router.get("/lecturer/:id/progress", authorizeRoles("LECTURER"), classController.getLecturerClassProgress);
+router.get("/lecturer/:id/students/:studentId/progress", authorizeRoles("LECTURER"), classController.getStudentProgressInClass);
 
 router.get("/admin", authorizeRoles("ADMIN"), classController.getClasses);
 router.get("/admin/:id", authorizeRoles("ADMIN"), classController.getClassById);
@@ -91,5 +93,20 @@ router.delete("/:id/students/:studentId", checkRole, (req, res, next) => {
   }
   return res.status(403).json({ success: false, message: "Admin student removal not supported" });
 });
+
+router.get("/:id/progress", checkRole, (req, res, next) => {
+  if (req.baseUrl.includes("/lecturer")) {
+    return classController.getLecturerClassProgress(req, res, next);
+  }
+  return res.status(403).json({ success: false, message: "Admin progress query not supported" });
+});
+
+router.get("/:id/students/:studentId/progress", checkRole, (req, res, next) => {
+  if (req.baseUrl.includes("/lecturer")) {
+    return classController.getStudentProgressInClass(req, res, next);
+  }
+  return res.status(403).json({ success: false, message: "Admin student progress query not supported" });
+});
+
 
 module.exports = router;

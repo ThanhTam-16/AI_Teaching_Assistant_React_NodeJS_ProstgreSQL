@@ -158,20 +158,21 @@ const getAIHistoryById = async (userId, id) => {
 const saveExerciseAsAssignment = async (userId, data) => {
   const { aiGenerationId, exerciseIndex, classId, subjectId, lessonId, cloId, dueDate, totalScore } = data;
 
-  const generation = await getAIHistoryById(userId, aiGenerationId);
+  let exercise = data.exercise;
+  let promptText = "";
 
-  if (generation.type !== "EXERCISE") {
-    const error = new Error("Invalid generation type. Log must be an EXERCISE");
-    error.statusCode = 400;
-    throw error;
+  if (aiGenerationId && aiGenerationId !== "custom") {
+    const generation = await getAIHistoryById(userId, aiGenerationId);
+    promptText = generation.prompt;
+    if (!exercise) {
+      const result = typeof generation.result === "string" ? JSON.parse(generation.result) : generation.result;
+      const exercises = result?.exercises || [];
+      exercise = exercises[exerciseIndex];
+    }
   }
 
-  const result = typeof generation.result === "string" ? JSON.parse(generation.result) : generation.result;
-  const exercises = result?.exercises || [];
-  const exercise = exercises[exerciseIndex];
-
   if (!exercise) {
-    const error = new Error("Selected exercise index not found in generated results");
+    const error = new Error("Selected exercise not found");
     error.statusCode = 400;
     throw error;
   }
@@ -186,7 +187,7 @@ const saveExerciseAsAssignment = async (userId, data) => {
   }
 
   const assignmentData = {
-    title: exercise.title || `AI Bài tập về ${generation.prompt?.slice(0, 30) || "chủ đề"}`,
+    title: exercise.title || `AI Bài tập về ${promptText?.slice(0, 30) || "chủ đề"}`,
     description: desc,
     requirements: requirementsString,
     dueDate,
@@ -205,23 +206,34 @@ const saveExerciseAsAssignment = async (userId, data) => {
 };
 
 const saveQuiz = async (userId, data) => {
-  const { aiGenerationId, subjectId, lessonId, title } = data;
+  const { aiGenerationId, subjectId, lessonId, title, difficulty } = data;
 
-  const generation = await getAIHistoryById(userId, aiGenerationId);
+  let questions = data.questions;
+  let quizTitle = title;
+  let promptText = "";
 
-  if (generation.type !== "QUIZ") {
-    const error = new Error("Invalid generation type. Log must be a QUIZ");
+  if (aiGenerationId && aiGenerationId !== "custom") {
+    const generation = await getAIHistoryById(userId, aiGenerationId);
+    promptText = generation.prompt;
+    const result = typeof generation.result === "string" ? JSON.parse(generation.result) : generation.result;
+    if (!questions) {
+      questions = result?.questions || [];
+    }
+    if (!quizTitle) {
+      quizTitle = result?.quizTitle;
+    }
+  }
+
+  if (!questions) {
+    const error = new Error("Questions not found");
     error.statusCode = 400;
     throw error;
   }
 
-  const result = typeof generation.result === "string" ? JSON.parse(generation.result) : generation.result;
-  const questions = result?.questions || [];
-
   const quizService = require("./quiz.service");
   const quiz = await quizService.createQuiz({
-    title: title || result?.quizTitle || `AI Quiz về ${generation.prompt?.slice(0, 30) || "chủ đề"}`,
-    difficulty: "MEDIUM",
+    title: quizTitle || `AI Quiz về ${promptText?.slice(0, 30) || "chủ đề"}`,
+    difficulty: difficulty || "MEDIUM",
     subjectId,
     lessonId
   }, userId);
@@ -245,57 +257,61 @@ const saveQuiz = async (userId, data) => {
 };
 
 const saveLessonOutline = async (userId, data) => {
-  const { aiGenerationId, subjectId, cloId, chapter } = data;
+  const { aiGenerationId, subjectId, cloId, chapter, title: customTitle, content: customContent } = data;
 
-  const generation = await getAIHistoryById(userId, aiGenerationId);
+  let titleText = customTitle;
+  let contentStr = customContent;
+  let objectivesStr = "";
 
-  if (generation.type !== "LESSON_OUTLINE") {
-    const error = new Error("Invalid generation type. Log must be a LESSON_OUTLINE");
-    error.statusCode = 400;
-    throw error;
-  }
+  if (!contentStr && aiGenerationId && aiGenerationId !== "custom") {
+    const generation = await getAIHistoryById(userId, aiGenerationId);
+    const result = typeof generation.result === "string" ? JSON.parse(generation.result) : generation.result;
+    
+    if (!titleText) titleText = result.title;
+    objectivesStr = result.objectives ? result.objectives.join("\n") : "Giáo án tự động tạo bởi AI.";
 
-  const result = typeof generation.result === "string" ? JSON.parse(generation.result) : generation.result;
+    let contentStrTmp = "";
+    if (result.sections && Array.isArray(result.sections)) {
+      contentStrTmp += "NỘI DUNG CHI TIẾT BÀI GIẢNG:\n\n";
+      result.sections.forEach((sec, idx) => {
+        contentStrTmp += `${idx + 1}. ${sec.heading}\n`;
+        contentStrTmp += `   Tóm tắt: ${sec.summary || ""}\n`;
+        if (sec.keyPoints && Array.isArray(sec.keyPoints)) {
+          contentStrTmp += "   Các điểm chính:\n";
+          sec.keyPoints.forEach(kp => {
+            contentStrTmp += `   - ${kp}\n`;
+          });
+        }
+        contentStrTmp += "\n";
+      });
+    }
 
-  let contentStr = "";
-  if (result.sections && Array.isArray(result.sections)) {
-    contentStr += "NỘI DUNG CHI TIẾT BÀI GIẢNG:\n\n";
-    result.sections.forEach((sec, idx) => {
-      contentStr += `${idx + 1}. ${sec.heading}\n`;
-      contentStr += `   Tóm tắt: ${sec.summary || ""}\n`;
-      if (sec.keyPoints && Array.isArray(sec.keyPoints)) {
-        contentStr += "   Các điểm chính:\n";
-        sec.keyPoints.forEach(kp => {
-          contentStr += `   - ${kp}\n`;
-        });
-      }
-      contentStr += "\n";
-    });
-  }
+    if (result.keyConcepts && Array.isArray(result.keyConcepts)) {
+      contentStrTmp += "\nCÁC KHÁI NIỆM CỐT LÕI:\n";
+      result.keyConcepts.forEach(c => {
+        contentStrTmp += `- ${c}\n`;
+      });
+    }
 
-  if (result.keyConcepts && Array.isArray(result.keyConcepts)) {
-    contentStr += "\nCÁC KHÁI NIỆM CỐT LÕI:\n";
-    result.keyConcepts.forEach(c => {
-      contentStr += `- ${c}\n`;
-    });
-  }
+    if (result.activities && Array.isArray(result.activities)) {
+      contentStrTmp += "\nHOẠT ĐỘNG TRÊN LỚP:\n";
+      result.activities.forEach(act => {
+        contentStrTmp += `- ${act}\n`;
+      });
+    }
 
-  if (result.activities && Array.isArray(result.activities)) {
-    contentStr += "\nHOẠT ĐỘNG TRÊN LỚP:\n";
-    result.activities.forEach(act => {
-      contentStr += `- ${act}\n`;
-    });
-  }
+    if (result.assessmentSuggestion) {
+      contentStrTmp += `\nGỢI Ý ĐÁNH GIÁ:\n${result.assessmentSuggestion}\n`;
+    }
 
-  if (result.assessmentSuggestion) {
-    contentStr += `\nGỢI Ý ĐÁNH GIÁ:\n${result.assessmentSuggestion}\n`;
+    contentStr = contentStrTmp;
   }
 
   const lessonData = {
-    title: result.title || `AI Giáo án về ${generation.prompt?.slice(0, 30) || "chủ đề"}`,
+    title: titleText || "Giáo án chưa đặt tên",
     chapter: chapter || "1",
-    description: result.objectives ? result.objectives.join("\n") : "Giáo án tự động tạo bởi AI.",
-    content: contentStr,
+    description: objectivesStr || "Giáo án tự động tạo bởi AI.",
+    content: contentStr || "Nội dung bài học trống",
     status: "DRAFT",
     subjectId,
     cloId
@@ -303,6 +319,24 @@ const saveLessonOutline = async (userId, data) => {
 
   const lessonService = require("./lesson.service");
   return await lessonService.createLesson(lessonData, userId);
+};
+
+const deleteAIHistory = async (userId, id) => {
+  const log = await prisma.aIGeneration.findFirst({
+    where: { id, userId },
+  });
+
+  if (!log) {
+    const error = new Error("AI Generation log not found or access denied");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await prisma.aIGeneration.delete({
+    where: { id },
+  });
+
+  return { id };
 };
 
 module.exports = {
@@ -316,4 +350,5 @@ module.exports = {
   saveExerciseAsAssignment,
   saveQuiz,
   saveLessonOutline,
+  deleteAIHistory,
 };

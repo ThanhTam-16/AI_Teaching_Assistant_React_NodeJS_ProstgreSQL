@@ -1,7 +1,7 @@
 const prisma = require("../config/database");
 const { formatPaginatedResponse } = require("../utils/pagination");
 
-const getQuizzes = async ({ page, limit, skip, subjectId, lessonId, lecturerId }) => {
+const getQuizzes = async ({ page, limit, skip, subjectId, lessonId, classId, status, lecturerId }) => {
   const where = {
     subject: {
       lecturerSubjects: {
@@ -16,6 +16,18 @@ const getQuizzes = async ({ page, limit, skip, subjectId, lessonId, lecturerId }
 
   if (lessonId) {
     where.lessonId = lessonId;
+  }
+
+  if (classId) {
+    if (classId === "null") {
+      where.classId = null;
+    } else {
+      where.classId = classId;
+    }
+  }
+
+  if (status) {
+    where.status = status;
   }
 
   const [quizzes, total] = await Promise.all([
@@ -99,7 +111,7 @@ const getQuizById = async (id, lecturerId) => {
 };
 
 const createQuiz = async (quizData, lecturerId) => {
-  const { title, description, difficulty, subjectId, lessonId } = quizData;
+  const { title, description, difficulty, subjectId, lessonId, status, classId } = quizData;
 
   if (!title || !subjectId) {
     const error = new Error("Title and Subject ID are required");
@@ -122,9 +134,11 @@ const createQuiz = async (quizData, lecturerId) => {
     throw error;
   }
 
-  if (lessonId) {
+  const sanitizedLessonId = (lessonId && lessonId !== 'none' && lessonId !== 'null' && lessonId !== '') ? lessonId : null;
+
+  if (sanitizedLessonId) {
     const lesson = await prisma.lesson.findFirst({
-      where: { id: lessonId, subjectId },
+      where: { id: sanitizedLessonId, subjectId },
     });
     if (!lesson) {
       const error = new Error("Lesson not found or does not belong to the selected subject");
@@ -138,8 +152,10 @@ const createQuiz = async (quizData, lecturerId) => {
       title,
       description,
       difficulty: difficulty || "MEDIUM",
+      status: status || "DRAFT",
       subjectId,
-      lessonId,
+      classId: classId === "null" ? null : (classId || null),
+      lessonId: sanitizedLessonId,
       createdById: lecturerId,
     },
   });
@@ -165,11 +181,12 @@ const updateQuiz = async (id, quizData, lecturerId) => {
     throw error;
   }
 
-  const { title, description, difficulty, lessonId } = quizData;
+  const { title, description, difficulty, lessonId, status, classId } = quizData;
+  const sanitizedLessonId = (lessonId && lessonId !== 'none' && lessonId !== 'null' && lessonId !== '') ? lessonId : null;
 
-  if (lessonId && lessonId !== quiz.lessonId) {
+  if (sanitizedLessonId && sanitizedLessonId !== quiz.lessonId) {
     const lesson = await prisma.lesson.findFirst({
-      where: { id: lessonId, subjectId: quiz.subjectId },
+      where: { id: sanitizedLessonId, subjectId: quiz.subjectId },
     });
     if (!lesson) {
       const error = new Error("Lesson not found or does not belong to the subject of this quiz");
@@ -184,7 +201,9 @@ const updateQuiz = async (id, quizData, lecturerId) => {
       title,
       description,
       difficulty,
-      lessonId,
+      status,
+      classId: classId === "null" ? null : (classId || undefined),
+      lessonId: sanitizedLessonId,
     },
   });
 
@@ -338,6 +357,11 @@ const getStudentQuizzes = async ({ studentId, page, limit, skip, subjectId, less
 
   const where = {
     subjectId: { in: subjectIds },
+    status: "PUBLISHED",
+    OR: [
+      { classId: null },
+      { classId: { in: classIds } }
+    ]
   };
 
   if (subjectId) {
@@ -411,6 +435,11 @@ const getStudentQuizById = async (id, studentId) => {
     where: {
       id,
       subjectId: { in: subjectIds },
+      status: "PUBLISHED",
+      OR: [
+        { classId: null },
+        { classId: { in: classIds } }
+      ]
     },
     include: {
       subject: {

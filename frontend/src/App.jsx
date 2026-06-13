@@ -26,10 +26,15 @@ import SystemSettingsPage    from './features/admin/pages/SystemSettingsPage'
 import LecturerLayout           from './features/lecturer/layouts/LecturerLayout'
 import LecturerOverviewPage     from './features/lecturer/pages/LecturerOverviewPage'
 import ClassManagementPage      from './features/lecturer/pages/ClassManagementPage'
+import ClassDetailPage          from './features/lecturer/pages/ClassDetailPage'
+import StudentProgressDetailPage from './features/lecturer/pages/StudentProgressDetailPage'
 import LecturerSubjectPage      from './features/lecturer/pages/LecturerSubjectPage'
+import SubjectDetailPage        from './features/lecturer/pages/SubjectDetailPage'
 import CLOManagementPage        from './features/lecturer/pages/CLOManagementPage'
 import LessonManagementPage     from './features/lecturer/pages/LessonManagementPage'
+import LessonDetailPage         from './features/lecturer/pages/LessonDetailPage'
 import AssignmentManagementPage from './features/lecturer/pages/AssignmentManagementPage'
+import AssignmentDetailPage     from './features/lecturer/pages/AssignmentDetailPage'
 import { SubmissionManagementPage, GradingPage } from './features/lecturer/pages/SubmissionPages'
 import {
   AIExerciseGeneratorPage,
@@ -38,7 +43,11 @@ import {
   AISlideGeneratorPage,
   AILessonOutlineGeneratorPage,
 } from './features/lecturer/pages/ai/AIPages'
-import LecturerReportPage from './features/lecturer/pages/LecturerReportPage'
+import AIDraftsPage             from './features/lecturer/pages/ai/AIDraftsPage'
+import AIDraftDetailPage         from './features/lecturer/pages/ai/AIDraftDetailPage'
+import QuizManagementPage       from './features/lecturer/pages/QuizManagementPage'
+import QuizDetailPage           from './features/lecturer/pages/QuizDetailPage'
+import LecturerReportPage       from './features/lecturer/pages/LecturerReportPage'
 
 // ── Student ───────────────────────────────────────────────────────────────────
 import StudentLayout         from './features/student/layouts/StudentLayout'
@@ -106,17 +115,27 @@ export default function App() {
             >
               <Route index                        element={<LecturerOverviewPage />} />
               <Route path="classes"               element={<ClassManagementPage />} />
+              <Route path="classes/:classId"      element={<ClassDetailPage />} />
+              <Route path="classes/:classId/subjects/:subjectId" element={<ClassDetailPage />} />
+              <Route path="classes/:classId/subjects/:subjectId/students/:studentId" element={<StudentProgressDetailPage />} />
               <Route path="subjects"              element={<LecturerSubjectPage />} />
+              <Route path="subjects/:subjectId"    element={<SubjectDetailPage />} />
               <Route path="clos"                  element={<CLOManagementPage />} />
               <Route path="lessons"               element={<LessonManagementPage />} />
+              <Route path="lessons/:lessonId"      element={<LessonDetailPage />} />
               <Route path="assignments"           element={<AssignmentManagementPage />} />
+              <Route path="assignments/:assignmentId" element={<AssignmentDetailPage />} />
               <Route path="submissions"           element={<SubmissionManagementPage />} />
               <Route path="grading/:submissionId" element={<GradingPage />} />
+              <Route path="quizzes"               element={<QuizManagementPage />} />
+              <Route path="quizzes/:quizId"       element={<QuizDetailPage />} />
               <Route path="ai/exercises"          element={<AIExerciseGeneratorPage />} />
               <Route path="ai/quizzes"            element={<AIQuizGeneratorPage />} />
               <Route path="ai/feedback"           element={<AIFeedbackGeneratorPage />} />
               <Route path="ai/slides"             element={<AISlideGeneratorPage />} />
               <Route path="ai/lesson-outline"     element={<AILessonOutlineGeneratorPage />} />
+              <Route path="ai/history"            element={<AIDraftsPage />} />
+              <Route path="ai/history/:id"        element={<AIDraftDetailPage />} />
               <Route path="reports"               element={<LecturerReportPage />} />
             </Route>
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Plus, Search, ClipboardList, Pencil, Trash2, MoreHorizontal, Eye } from 'lucide-react'
+import { Plus, Search, ClipboardList, Pencil, Trash2, MoreHorizontal, Eye, Sparkles } from 'lucide-react'
 import {
   getAssignments, createAssignment, updateAssignment,
   deleteAssignment, updateAssignmentStatus,
@@ -15,19 +16,20 @@ import {
   Badge, Sk, EmptyState, ErrorBanner, Pagination, inputCls, labelCls,
 } from '../components/LecturerUI'
 import PortalDropdown from '../../../components/common/PortalDropdown'
+import ImportAIModal from '../components/ImportAIModal'
 
 const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD']
 const DIFF_LABELS   = { EASY: 'Dễ', MEDIUM: 'Trung bình', HARD: 'Khó' }
 const DIFF_COLORS   = { EASY: 'text-emerald-500', MEDIUM: 'text-amber-500', HARD: 'text-rose-500' }
 const SUB_TYPES     = ['TEXT', 'FILE', 'GITHUB', 'CODE']
-const STATUSES      = ['OPEN', 'CLOSED', 'DRAFT']
-const STATUS_LABELS = { OPEN: 'Đang mở', CLOSED: 'Đã đóng', DRAFT: 'Nháp' }
+const STATUSES      = ['ASSIGNED', 'CLOSED', 'DRAFT']
+const STATUS_LABELS = { ASSIGNED: 'Đang mở', CLOSED: 'Đã đóng', DRAFT: 'Nháp' }
 
 const EMPTY = {
   title: '', description: '', content: '',
   subjectId: '', classId: '', lessonId: '', cloIds: [],
   dueDate: '', totalScore: 100, difficulty: 'MEDIUM',
-  submissionType: 'TEXT', status: 'OPEN',
+  submissionType: 'TEXT', status: 'ASSIGNED',
 }
 
 function AssignmentModal({ mode, initial, subjects, classes, lessons, onClose, onSave, saving, error }) {
@@ -38,7 +40,7 @@ function AssignmentModal({ mode, initial, subjects, classes, lessons, onClose, o
     classId: initial.classId ?? '', lessonId: initial.lessonId ?? '',
     cloIds: initial.cloIds ?? [], dueDate: initial.dueDate?.slice(0, 16) ?? '',
     totalScore: initial.totalScore ?? 100, difficulty: initial.difficulty ?? 'MEDIUM',
-    submissionType: initial.submissionType ?? 'TEXT', status: initial.status ?? 'OPEN',
+    submissionType: initial.submissionType ?? 'TEXT', status: initial.status ?? 'ASSIGNED',
   } : EMPTY)
 
   useEffect(() => {
@@ -175,21 +177,28 @@ function AssignmentModal({ mode, initial, subjects, classes, lessons, onClose, o
   )
 }
 
-function ActionMenu({ assignment, onEdit, onDelete, onClose }) {
+function ActionMenu({ assignment, onEdit, onDelete, onClose, onViewDetail }) {
+  const handleAction = (e, callback) => {
+    e.stopPropagation()
+    callback(assignment)
+  }
   return (
     <PortalDropdown>
-      <button onClick={() => onEdit(assignment)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:text-gray-300 text-gray-600 dark:hover:bg-[#21262D] hover:bg-gray-50"><Pencil size={11} /> Chỉnh sửa</button>
-      <button onClick={() => onClose(assignment)}
-        className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:hover:bg-[#21262D] hover:bg-gray-50 ${assignment.status === 'OPEN' ? 'text-amber-400' : 'text-emerald-400'}`}>
-        {assignment.status === 'OPEN' ? 'Đóng bài tập' : 'Mở lại'}
+      <button onClick={(e) => handleAction(e, onViewDetail)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:text-gray-300 text-gray-600 dark:hover:bg-[#21262D] hover:bg-gray-50"><Eye size={11} /> Chi tiết</button>
+      <button onClick={(e) => handleAction(e, onEdit)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:text-gray-300 text-gray-600 dark:hover:bg-[#21262D] hover:bg-gray-50"><Pencil size={11} /> Chỉnh sửa</button>
+      <button onClick={(e) => handleAction(e, onClose)}
+        className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:hover:bg-[#21262D] hover:bg-gray-50 ${assignment.status === 'ASSIGNED' ? 'text-amber-400' : 'text-emerald-400'}`}>
+        {assignment.status === 'ASSIGNED' ? 'Đóng bài tập' : 'Mở lại'}
       </button>
       <div className="border-t dark:border-[#21262D] border-gray-100 my-0.5" />
-      <button onClick={() => onDelete(assignment)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-rose-400 dark:hover:bg-rose-500/5 hover:bg-rose-50"><Trash2 size={11} /> Xoá</button>
+      <button onClick={(e) => handleAction(e, onDelete)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-rose-400 dark:hover:bg-rose-500/5 hover:bg-rose-50"><Trash2 size={11} /> Xoá</button>
     </PortalDropdown>
   )
 }
 
 export default function AssignmentManagementPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [assignments, setAssignments] = useState([])
   const [subjects, setSubjects] = useState([])
   const [classes, setClasses]   = useState([])
@@ -204,6 +213,7 @@ export default function AssignmentManagementPage() {
   const [modal, setModal] = useState(null)
   const [saving, setSaving] = useState(false)
   const [modalErr, setModalErr] = useState('')
+  const [showImportAIModal, setShowImportAIModal] = useState(false)
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -240,18 +250,33 @@ export default function AssignmentManagementPage() {
 
   const handleDelete = async () => {
     setSaving(true)
-    try { await deleteAssignment(modal.data.id); toast.success('Đã xoá bài tập.'); setModal(null); fetchAll() }
-    catch (e) { toast.error(e.response?.data?.message ?? 'Xoá thất bại.') }
-    finally { setSaving(false) }
+    try {
+      await deleteAssignment(modal.data.id)
+      toast.success('Đã xoá bài tập.')
+      setModal(null)
+      fetchAll()
+    } catch (e) {
+      const msg = e.response?.data?.message || ''
+      if (msg.toLowerCase().includes('submission') || msg.toLowerCase().includes('bài nộp')) {
+        toast.error('Không thể xóa vì đã có bài nộp. Vui lòng đóng bài tập thay thế.')
+      } else {
+        toast.error(msg || 'Xoá thất bại.')
+      }
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleClose = async (a) => {
-    const next = a.status === 'OPEN' ? 'CLOSED' : 'OPEN'
+    const next = a.status === 'ASSIGNED' ? 'CLOSED' : 'ASSIGNED'
     try {
       await updateAssignmentStatus(a.id, next)
       toast.success(next === 'CLOSED' ? 'Đã đóng bài tập.' : 'Đã mở lại bài tập.')
       fetchAll()
-    } catch { toast.error('Không thể thay đổi trạng thái.') }
+    } catch (e) {
+      const msg = e.response?.data?.message ?? 'Không thể thay đổi trạng thái bài tập.'
+      toast.error(msg)
+    }
   }
 
   const selectCls = 'dark:bg-[#161B22] bg-white border dark:border-[#21262D] border-blue-100 rounded-lg px-2.5 py-1.5 text-xs dark:text-gray-300 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-400/50 transition-all'
@@ -263,10 +288,16 @@ export default function AssignmentManagementPage() {
         description="Quản lý bài tập giao cho sinh viên"
         stats={[{ label: 'Tổng', value: meta.total || assignments.length }]}
         actions={
-          <button onClick={() => { setModal({ type: 'create' }); setModalErr('') }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-all shadow-sm">
-            <Plus size={13} /> Tạo bài tập
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowImportAIModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white text-xs font-semibold rounded-lg transition-all shadow-sm">
+              <Sparkles size={13} /> Import từ AI History
+            </button>
+            <button onClick={() => { setModal({ type: 'create' }); setModalErr('') }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-all shadow-sm">
+              <Plus size={13} /> Tạo bài tập
+            </button>
+          </div>
         }
       />
 
@@ -293,16 +324,15 @@ export default function AssignmentManagementPage() {
           <tr><td colSpan={8}><EmptyState icon={ClipboardList} title="Chưa có bài tập" sub="Tạo bài tập mới cho sinh viên"
             action={<button onClick={() => setModal({ type: 'create' })} className="px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600">Tạo bài tập</button>} /></td></tr>
         ) : assignments.map(a => (
-          <Tr key={a.id}>
+          <Tr key={a.id} onClick={() => navigate(`/lecturer/assignments/${a.id}`, { state: { from: location.pathname } })}>
             <Td>
               <div>
-                <div
-                  onClick={() => { setModal({ type: 'edit', data: a }); setModalErr('') }}
-                  className="text-xs font-medium dark:text-gray-200 text-gray-700 hover:text-blue-500 dark:hover:text-blue-400 hover:underline cursor-pointer truncate max-w-48 transition-colors"
-                  title="Bấm để chỉnh sửa"
+                <span
+                  className="text-xs font-medium dark:text-gray-200 text-gray-700 hover:text-blue-500 dark:hover:text-blue-400 hover:underline cursor-pointer truncate max-w-48 transition-colors block"
+                  title="Xem chi tiết bài tập"
                 >
                   {a.title}
-                </div>
+                </span>
                 {a.subject?.name && <div className="text-[10px] dark:text-gray-500 text-gray-400">{a.subject.name}</div>}
               </div>
             </Td>
@@ -326,8 +356,9 @@ export default function AssignmentManagementPage() {
               </span>
             </Td>
             <Td><Badge label={a.status} /></Td>
-            <Td>
+            <Td onClick={e => e.stopPropagation()}>
               <ActionMenu assignment={a}
+                onViewDetail={a => navigate(`/lecturer/assignments/${a.id}`, { state: { from: location.pathname } })}
                 onEdit={a => { setModal({ type: 'edit', data: a }); setModalErr('') }}
                 onDelete={a => setModal({ type: 'delete', data: a })}
                 onClose={handleClose}
@@ -355,6 +386,13 @@ export default function AssignmentManagementPage() {
           </div>
         </Modal>
       )}
+
+      <ImportAIModal
+        isOpen={showImportAIModal}
+        onClose={() => setShowImportAIModal(false)}
+        type="ASSIGNMENT"
+        onImportSuccess={fetchAll}
+      />
     </div>
   )
 }

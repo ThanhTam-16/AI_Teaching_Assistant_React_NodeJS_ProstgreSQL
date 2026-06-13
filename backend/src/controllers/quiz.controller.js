@@ -5,7 +5,7 @@ const { getPaginationParams } = require("../utils/pagination");
 const getQuizzes = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPaginationParams(req.query);
-    const { subjectId, lessonId } = req.query;
+    const { subjectId, lessonId, classId, status } = req.query;
     const lecturerId = req.user.id;
 
     const result = await quizService.getQuizzes({
@@ -14,6 +14,8 @@ const getQuizzes = async (req, res, next) => {
       skip,
       subjectId,
       lessonId,
+      classId,
+      status,
       lecturerId,
     });
 

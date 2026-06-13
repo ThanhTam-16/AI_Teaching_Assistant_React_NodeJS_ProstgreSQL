@@ -168,6 +168,7 @@ const updateLesson = async (id, lessonData, lecturerId) => {
     }
   }
 
+  const oldStatus = lesson.status;
   const updatedLesson = await prisma.lesson.update({
     where: { id },
     data: {
@@ -179,6 +180,10 @@ const updateLesson = async (id, lessonData, lecturerId) => {
       cloId,
     },
   });
+
+  if (oldStatus === "DRAFT" && status === "PUBLISHED") {
+    await notifyPublishedLesson(id, updatedLesson.title, lesson.subjectId, lecturerId);
+  }
 
   return updatedLesson;
 };
@@ -245,10 +250,15 @@ const updateLessonStatus = async (id, status, lecturerId) => {
     throw error;
   }
 
+  const oldStatus = lesson.status;
   const updatedLesson = await prisma.lesson.update({
     where: { id },
     data: { status },
   });
+
+  if (oldStatus === "DRAFT" && status === "PUBLISHED") {
+    await notifyPublishedLesson(id, updatedLesson.title, lesson.subjectId, lecturerId);
+  }
 
   return updatedLesson;
 };
@@ -536,6 +546,50 @@ const getStudentLessonAssignments = async (lessonId, studentId) => {
   return assignments;
 };
 
+const notifyPublishedLesson = async (lessonId, lessonTitle, subjectId, lecturerId) => {
+  try {
+    const classSubjects = await prisma.classSubject.findMany({
+      where: {
+        subjectId,
+        class: {
+          lecturerId,
+        },
+      },
+      select: {
+        classId: true,
+      },
+    });
+
+    const classIds = classSubjects.map((cs) => cs.classId);
+    if (classIds.length === 0) return;
+
+    const enrollments = await prisma.classEnrollment.findMany({
+      where: {
+        classId: { in: classIds },
+      },
+      select: {
+        studentId: true,
+      },
+    });
+
+    const studentIds = [...new Set(enrollments.map((e) => e.studentId))];
+    if (studentIds.length === 0) return;
+
+    await prisma.notification.createMany({
+      data: studentIds.map((studentId) => ({
+        userId: studentId,
+        type: "SYSTEM",
+        title: "Bài học mới",
+        message: `Bạn có bài học mới: ${lessonTitle}`,
+        relatedUrl: "/student/lessons",
+        isRead: false,
+      })),
+    });
+  } catch (error) {
+    console.error("Error in notifyPublishedLesson:", error);
+  }
+};
+
 module.exports = {
   getLessons,
   getLessonById,
@@ -550,4 +604,5 @@ module.exports = {
   getStudentLessonById,
   getStudentLessonMaterials,
   getStudentLessonAssignments,
+  notifyPublishedLesson,
 };

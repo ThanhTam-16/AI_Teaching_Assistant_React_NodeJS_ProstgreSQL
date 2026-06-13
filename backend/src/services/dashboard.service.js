@@ -288,6 +288,96 @@ const getLecturerStats = async (lecturerId) => {
     }),
   ]);
 
+  // Calculate submission trend & status counts
+  const sixWeeksAgo = new Date();
+  sixWeeksAgo.setDate(sixWeeksAgo.getDate() - 42); // 6 weeks
+
+  const [submissionsLast6Weeks, submissionStatusCounts] = await Promise.all([
+    prisma.submission.findMany({
+      where: {
+        submittedAt: { gte: sixWeeksAgo },
+        assignment: {
+          OR: [
+            { createdById: lecturerId },
+            { class: { lecturerId } }
+          ]
+        }
+      },
+      select: {
+        status: true,
+        submittedAt: true
+      }
+    }),
+    prisma.submission.groupBy({
+      by: ['status'],
+      where: {
+        assignment: {
+          OR: [
+            { createdById: lecturerId },
+            { class: { lecturerId } }
+          ]
+        }
+      },
+      _count: {
+        _all: true
+      }
+    })
+  ]);
+
+  // Group by week
+  const weeks = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const start = new Date(now);
+    start.setDate(now.getDate() - (i + 1) * 7);
+    const end = new Date(now);
+    end.setDate(now.getDate() - i * 7);
+    const weekLabel = `Tuần ${6 - i}`;
+    weeks.push({
+      week: weekLabel,
+      start,
+      end,
+      submitted: 0,
+      graded: 0
+    });
+  }
+
+  submissionsLast6Weeks.forEach(sub => {
+    const date = new Date(sub.submittedAt);
+    const week = weeks.find(w => date >= w.start && date < w.end);
+    if (week) {
+      if (sub.status === 'GRADED') {
+        week.graded++;
+      } else {
+        week.submitted++;
+      }
+    }
+  });
+
+  const submissionTrend = weeks.map(({ week, submitted, graded }) => ({
+    week,
+    submitted,
+    graded
+  }));
+
+  const statusMap = {
+    GRADED: 0,
+    SUBMITTED: 0,
+    LATE: 0,
+    NEED_REVIEW: 0
+  };
+  submissionStatusCounts.forEach(c => {
+    statusMap[c.status] = c._count._all;
+  });
+
+  const submissionStatus = [
+    { name: 'Đã chấm', value: statusMap.GRADED, color: '#10b981' },
+    { name: 'Chờ chấm', value: statusMap.SUBMITTED + statusMap.LATE, color: '#3b82f6' },
+    { name: 'Cần xem xét', value: statusMap.NEED_REVIEW, color: '#f59e0b' }
+  ];
+
+  const lateSubmissions = statusMap.LATE;
+
   return {
     totalClasses,
     totalSubjects,
@@ -296,6 +386,9 @@ const getLecturerStats = async (lecturerId) => {
     totalSubmissions,
     pendingSubmissions,
     gradedSubmissions,
+    lateSubmissions,
+    submissionTrend,
+    submissionStatus,
     recentSubmissions: recentSubmissions.map((s) => ({
       id: s.id,
       studentName: s.student.fullName,
@@ -315,7 +408,7 @@ const getLecturerStats = async (lecturerId) => {
       createdAt: a.createdAt,
     })),
   };
-};
+}
 
 const getStudentStats = async (studentId) => {
   const enrollments = await prisma.classEnrollment.findMany({

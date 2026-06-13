@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, BookOpen, GraduationCap, Target, FileText,
   ClipboardList, Inbox, Star, Sparkles, BarChart3,
-  LogOut, Menu, X, Sun, Moon, ChevronRight,
+  LogOut, Menu, X, Sun, Moon, ChevronRight, History, Brain
 } from 'lucide-react'
 import { useAuth } from '../../../hooks/useAuth'
 import { useTheme } from '../../../contexts/ThemeContext'
@@ -23,6 +23,7 @@ const NAV = [
       { label: 'CLO',        href: '/lecturer/clos',        icon: Target },
       { label: 'Bài học',    href: '/lecturer/lessons',     icon: FileText },
       { label: 'Bài tập',    href: '/lecturer/assignments', icon: ClipboardList },
+      { label: 'Quiz',       href: '/lecturer/quizzes',     icon: Brain },
     ],
   },
   {
@@ -39,6 +40,7 @@ const NAV = [
       { label: 'AI Feedback',href: '/lecturer/ai/feedback',  icon: Target },
       { label: 'AI Giáo án', href: '/lecturer/ai/lesson-outline', icon: BookOpen },
       { label: 'AI Slide',   href: '/lecturer/ai/slides',    icon: FileText },
+      { label: 'Lịch sử AI', href: '/lecturer/ai/history',   icon: History },
     ],
   },
   {

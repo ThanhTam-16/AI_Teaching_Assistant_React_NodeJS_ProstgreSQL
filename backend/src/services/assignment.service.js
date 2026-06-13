@@ -2,12 +2,15 @@ const prisma = require("../config/database");
 const { formatPaginatedResponse } = require("../utils/pagination");
 
 const getAssignments = async ({ page, limit, skip, search, classId, subjectId, status, lecturerId }) => {
-  const where = {
+  // Base ownership filter — always applied
+  const ownershipFilter = {
     OR: [
       { createdById: lecturerId },
       { class: { lecturerId } },
     ],
   };
+
+  const where = { AND: [ownershipFilter] };
 
   if (classId) {
     where.classId = classId;
@@ -22,10 +25,13 @@ const getAssignments = async ({ page, limit, skip, search, classId, subjectId, s
   }
 
   if (search) {
-    where.OR = [
-      { title: { contains: search, mode: "insensitive" } },
-      { description: { contains: search, mode: "insensitive" } },
-    ];
+    // Add search as extra AND condition — does NOT overwrite ownership filter
+    where.AND.push({
+      OR: [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ],
+    });
   }
 
   const [assignments, total] = await Promise.all([
@@ -226,6 +232,16 @@ const createAssignment = async (assignmentData, lecturerId) => {
     },
   });
 
+  if (newAssignment.status === "ASSIGNED") {
+    const notificationService = require("./notification.service");
+    await notificationService.notifyClassStudents(classId, {
+      type: "ASSIGNMENT",
+      title: "Bài tập mới",
+      message: `Bạn có bài tập mới: ${title}`,
+      relatedUrl: "/student/assignments",
+    });
+  }
+
   return newAssignment;
 };
 
@@ -281,6 +297,7 @@ const updateAssignment = async (id, assignmentData, lecturerId) => {
     }
   }
 
+  const oldStatus = assignment.status;
   const updatedAssignment = await prisma.assignment.update({
     where: { id },
     data: {
@@ -296,6 +313,25 @@ const updateAssignment = async (id, assignmentData, lecturerId) => {
       cloId,
     },
   });
+
+  if (updatedAssignment.status === "ASSIGNED") {
+    const notificationService = require("./notification.service");
+    if (oldStatus === "DRAFT") {
+      await notificationService.notifyClassStudents(assignment.classId, {
+        type: "ASSIGNMENT",
+        title: "Bài tập mới",
+        message: `Bạn có bài tập mới: ${updatedAssignment.title}`,
+        relatedUrl: "/student/assignments",
+      });
+    } else if (oldStatus === "ASSIGNED") {
+      await notificationService.notifyClassStudents(assignment.classId, {
+        type: "ASSIGNMENT",
+        title: "Cập nhật bài tập",
+        message: `Bài tập ${updatedAssignment.title} vừa được cập nhật`,
+        relatedUrl: "/student/assignments",
+      });
+    }
+  }
 
   return updatedAssignment;
 };
@@ -360,10 +396,30 @@ const updateAssignmentStatus = async (id, status, lecturerId) => {
     throw error;
   }
 
+  const oldStatus = assignment.status;
   const updatedAssignment = await prisma.assignment.update({
     where: { id },
     data: { status },
   });
+
+  if (updatedAssignment.status === "ASSIGNED") {
+    const notificationService = require("./notification.service");
+    if (oldStatus === "DRAFT") {
+      await notificationService.notifyClassStudents(assignment.classId, {
+        type: "ASSIGNMENT",
+        title: "Bài tập mới",
+        message: `Bạn có bài tập mới: ${updatedAssignment.title}`,
+        relatedUrl: "/student/assignments",
+      });
+    } else if (oldStatus === "ASSIGNED") {
+      await notificationService.notifyClassStudents(assignment.classId, {
+        type: "ASSIGNMENT",
+        title: "Cập nhật bài tập",
+        message: `Bài tập ${updatedAssignment.title} vừa được cập nhật`,
+        relatedUrl: "/student/assignments",
+      });
+    }
+  }
 
   return updatedAssignment;
 };

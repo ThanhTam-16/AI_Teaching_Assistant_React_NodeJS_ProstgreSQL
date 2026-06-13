@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   Sparkles, Copy, RefreshCw, CheckCircle2, BookOpen,
-  Zap, Brain, FileSliders, ChevronDown, ChevronUp, Save, ExternalLink
+  Zap, Brain, FileSliders, ChevronDown, ChevronUp, Save, ExternalLink, Pencil, Trash2, Plus, ChevronLeft
 } from 'lucide-react'
 import {
   generateExercises, generateQuiz,
@@ -13,7 +14,10 @@ import { getLecturerSubjects } from '../../../../services/subject.api'
 import { getCLOs } from '../../../../services/clo.api'
 import { getLecturerClasses } from '../../../../services/class.api'
 import { getLessons } from '../../../../services/lesson.api'
+import { getSubmissionById } from '../../../../services/submission.api'
+import { createFeedback } from '../../../../services/feedback.api'
 import { PageHeader, Modal, ModalHeader, ModalFooter, ErrorBanner, inputCls, labelCls } from '../../components/LecturerUI'
+import ConfirmModal from '../../../../components/common/ConfirmModal'
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 function AICard({ children }) {
@@ -257,7 +261,8 @@ function SaveQuizModal({ onClose, aiGenerationId, quizTitle, subjects }) {
     try {
       await saveAIQuiz({
         aiGenerationId,
-        ...form
+        ...form,
+        lessonId: form.lessonId || null
       })
       toast.success('Đã lưu bộ Quiz vào hệ thống!')
       onClose()
@@ -297,7 +302,7 @@ function SaveQuizModal({ onClose, aiGenerationId, quizTitle, subjects }) {
   )
 }
 
-function SaveLessonOutlineModal({ onClose, aiGenerationId, title, subjects }) {
+function SaveLessonOutlineModal({ onClose, aiGenerationId, title, content, subjects }) {
   const [clos, setClos] = useState([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -321,6 +326,8 @@ function SaveLessonOutlineModal({ onClose, aiGenerationId, title, subjects }) {
     try {
       await saveAILessonOutline({
         aiGenerationId,
+        title,
+        content,
         ...form
       })
       toast.success('Đã lưu Giáo án thành Bài học nháp!')
@@ -587,6 +594,9 @@ export function AIQuizGeneratorPage() {
   const [loading, setLoading] = useState(false)
   const [expanded, setExpanded] = useState({})
   const [saveModal, setSaveModal] = useState(null)
+  const [editableQuestions, setEditableQuestions] = useState([])
+  const [editModeIndex, setEditModeIndex] = useState(null)
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null })
 
   useEffect(() => {
     getLecturerSubjects()
@@ -602,7 +612,7 @@ export function AIQuizGeneratorPage() {
   const handle = async () => {
     if (loading) return
     if (!form.topic.trim()) { toast.error('Vui lòng nhập chủ đề.'); return }
-    setLoading(true); setResult(null); setExpanded({})
+    setLoading(true); setResult(null); setExpanded({}); setEditModeIndex(null)
     try {
       const r = await generateQuiz(form)
       setResult(r.data.data ?? r.data)
@@ -614,9 +624,39 @@ export function AIQuizGeneratorPage() {
     }
   }
 
-  const questions = Array.isArray(result) ? result
-    : result?.questions ? result.questions
-    : null
+  useEffect(() => {
+    const questionsList = Array.isArray(result) ? result
+      : result?.questions ? result.questions
+      : []
+    setEditableQuestions(questionsList)
+  }, [result])
+
+  const updateQuestion = (index, field, value) => {
+    setEditableQuestions(prev => {
+      const copy = [...prev]
+      copy[index] = { ...copy[index], [field]: value }
+      return copy
+    })
+  }
+
+  const deleteQuestion = (index) => {
+    setEditableQuestions(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const addQuestion = () => {
+    setEditableQuestions(prev => [
+      ...prev,
+      {
+        questionText: 'Câu hỏi mới',
+        questionType: form.questionType || 'MULTIPLE_CHOICE',
+        options: ['Lựa chọn A', 'Lựa chọn B', 'Lựa chọn C', 'Lựa chọn D'],
+        correctAnswer: 'Lựa chọn A',
+        explanation: 'Giải thích...'
+      }
+    ])
+  }
+
+  const questions = editableQuestions
 
   return (
     <div className="space-y-4 max-w-screen-2xl">
@@ -686,7 +726,7 @@ export function AIQuizGeneratorPage() {
             </AICard>
           )}
 
-          {!loading && questions && (
+          {!loading && questions && questions.length > 0 && (
             <AICard>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -704,43 +744,160 @@ export function AIQuizGeneratorPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                {questions.map((q, i) => (
-                  <div key={i} className="border dark:border-[#21262D] border-gray-200 rounded-xl overflow-hidden">
-                    <button onClick={() => setExpanded(e => ({ ...e, [i]: !e[i] }))}
-                      className="w-full flex items-center justify-between px-4 py-2.5 dark:hover:bg-[#21262D] hover:bg-gray-50 transition-colors text-left">
-                      <span className="text-xs font-medium dark:text-gray-200 text-gray-700 flex-1 pr-4">
-                        <span className="text-violet-400 font-bold mr-2">Q{i + 1}.</span>
-                        {q.questionText || q.question}
-                      </span>
-                      {expanded[i] ? <ChevronUp size={13} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={13} className="text-gray-400 flex-shrink-0" />}
-                    </button>
-                    {expanded[i] && (
-                      <div className="px-4 pb-3 dark:bg-[#0D1117]/50 bg-gray-50/50 border-t dark:border-[#21262D] border-gray-100">
-                        <div className="space-y-2 pt-2">
-                          {q.options && Array.isArray(q.options) && (
-                            <div className="space-y-1">
-                              {q.options.map((opt, j) => (
-                                <div key={j} className={`text-xs px-2 py-1 rounded-lg ${opt === q.correctAnswer ? 'dark:bg-emerald-500/10 bg-emerald-50 text-emerald-500 dark:border-emerald-500/20 border-emerald-200 border' : 'dark:text-gray-400 text-gray-500'}`}>
-                                  {String.fromCharCode(65+j)}. {opt}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {q.explanation && (
-                            <div className="text-[10px] dark:text-blue-300 text-blue-600 dark:bg-blue-500/5 bg-blue-50 px-2 py-1.5 rounded-lg border dark:border-blue-500/10 border-blue-100">
-                              💡 {q.explanation}
-                            </div>
-                          )}
+                {questions.map((q, i) => {
+                  const isEditingCard = editModeIndex === i
+                  return (
+                    <div key={i} className="border dark:border-[#21262D] border-gray-200 rounded-xl overflow-hidden">
+                      <div className="w-full flex items-center justify-between px-4 py-2.5 dark:bg-[#161B22]/30 bg-gray-50/50">
+                        <button onClick={() => setExpanded(e => ({ ...e, [i]: !e[i] }))}
+                          className="flex-1 text-left text-xs font-medium dark:text-gray-200 text-gray-700 pr-4">
+                          <span className="text-violet-400 font-bold mr-2">Q{i + 1}.</span>
+                          {q.questionText || q.question}
+                        </button>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button
+                            onClick={() => {
+                              setExpanded(e => ({ ...e, [i]: true }))
+                              setEditModeIndex(isEditingCard ? null : i)
+                            }}
+                            className="p-1 rounded text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                            title="Sửa câu hỏi"
+                          >
+                            {isEditingCard ? <CheckCircle2 size={13} className="text-emerald-555" /> : <Pencil size={13} />}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setConfirmModal({
+                                isOpen: true,
+                                title: 'Xóa câu hỏi',
+                                message: 'Bạn có chắc chắn muốn xóa câu hỏi này khỏi danh sách?',
+                                onConfirm: () => {
+                                  deleteQuestion(i)
+                                  setConfirmModal(prev => ({ ...prev, isOpen: false }))
+                                }
+                              })
+                            }}
+                            className="p-1 rounded text-gray-400 hover:text-rose-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                            title="Xóa câu hỏi"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                          <button onClick={() => setExpanded(e => ({ ...e, [i]: !e[i] }))}
+                            className="p-1 rounded text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                            {expanded[i] ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                          </button>
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
+                      {expanded[i] && (
+                        <div className="px-4 pb-3 dark:bg-[#0D1117]/50 bg-gray-50/50 border-t dark:border-[#21262D] border-gray-100">
+                          <div className="space-y-3 pt-3">
+                            {isEditingCard ? (
+                              <div className="space-y-3">
+                                <div>
+                                  <FormLabel>Nội dung câu hỏi</FormLabel>
+                                  <textarea
+                                    className={inputCls}
+                                    rows={2}
+                                    value={q.questionText || q.question || ''}
+                                    onChange={e => updateQuestion(i, 'questionText', e.target.value)}
+                                  />
+                                </div>
+                                <div>
+                                  <FormLabel>Loại câu hỏi</FormLabel>
+                                  <select
+                                    className={inputCls}
+                                    value={q.questionType || 'MULTIPLE_CHOICE'}
+                                    onChange={e => updateQuestion(i, 'questionType', e.target.value)}
+                                  >
+                                    <option value="MULTIPLE_CHOICE">Trắc nghiệm nhiều lựa chọn</option>
+                                    <option value="TRUE_FALSE">Đúng / Sai</option>
+                                    <option value="SHORT_ANSWER">Trả lời ngắn</option>
+                                  </select>
+                                </div>
+
+                                {q.questionType !== 'SHORT_ANSWER' && (
+                                  <div>
+                                    <FormLabel>Các lựa chọn (Options)</FormLabel>
+                                    <div className="grid grid-cols-2 gap-2 mt-1">
+                                      {(q.options || ['A', 'B', 'C', 'D']).map((opt, oIdx) => (
+                                        <div key={oIdx} className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-bold text-gray-400">{String.fromCharCode(65 + oIdx)}.</span>
+                                          <input
+                                            className={inputCls}
+                                            value={opt || ''}
+                                            onChange={e => {
+                                              const newOpts = [...(q.options || [])]
+                                              newOpts[oIdx] = e.target.value
+                                              updateQuestion(i, 'options', newOpts)
+                                            }}
+                                            placeholder={`Lựa chọn ${String.fromCharCode(65 + oIdx)}`}
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div>
+                                  <FormLabel>Đáp án đúng</FormLabel>
+                                  <input
+                                    className={inputCls}
+                                    value={q.correctAnswer || ''}
+                                    onChange={e => updateQuestion(i, 'correctAnswer', e.target.value)}
+                                    placeholder="VD: Option A, True, False,..."
+                                  />
+                                </div>
+                                <div>
+                                  <FormLabel>Giải thích đáp án</FormLabel>
+                                  <textarea
+                                    className={inputCls}
+                                    rows={2}
+                                    value={q.explanation || ''}
+                                    onChange={e => updateQuestion(i, 'explanation', e.target.value)}
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                {q.options && Array.isArray(q.options) && (
+                                  <div className="space-y-1">
+                                    {q.options.map((opt, j) => (
+                                      <div key={j} className={`text-xs px-2 py-1 rounded-lg ${opt === q.correctAnswer ? 'dark:bg-emerald-500/10 bg-emerald-50 text-emerald-500 dark:border-emerald-500/20 border-emerald-200 border' : 'dark:text-gray-400 text-gray-500'}`}>
+                                        {String.fromCharCode(65+j)}. {opt}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {!q.options && q.correctAnswer && (
+                                  <div className="text-xs px-2 py-1 rounded-lg dark:bg-emerald-500/10 bg-emerald-50 text-emerald-500 dark:border-emerald-500/20 border-emerald-200 border inline-block">
+                                    Đáp án đúng: {q.correctAnswer}
+                                  </div>
+                                )}
+                                {q.explanation && (
+                                  <div className="text-[10px] dark:text-blue-300 text-blue-600 dark:bg-blue-500/5 bg-blue-50 px-2 py-1.5 rounded-lg border dark:border-blue-500/10 border-blue-100">
+                                    💡 {q.explanation}
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+
+                <button
+                  onClick={addQuestion}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 border-2 border-dashed dark:border-gray-800 border-gray-200 dark:hover:border-violet-500/40 hover:border-violet-400 rounded-xl text-xs font-bold dark:text-gray-400 text-gray-500 hover:text-violet-500 transition-all"
+                >
+                  <Plus size={13} /> Thêm câu hỏi mới
+                </button>
               </div>
             </AICard>
           )}
 
-          {!loading && result && !questions && (
+          {!loading && result && (!questions || questions.length === 0) && (
             <ResultBox title="Kết quả Quiz" content={result} loading={false} icon={Brain} />
           )}
 
@@ -752,10 +909,20 @@ export function AIQuizGeneratorPage() {
         <SaveQuizModal
           aiGenerationId={result.generationId}
           quizTitle={result.quizTitle}
+          questions={questions}
           subjects={subjects}
           onClose={() => setSaveModal(false)}
         />
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        variant="danger"
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null })}
+      />
     </div>
   )
 }
@@ -764,14 +931,52 @@ export function AIQuizGeneratorPage() {
 // AI FEEDBACK GENERATOR
 // ─────────────────────────────────────────────────────────────────────────────
 export function AIFeedbackGeneratorPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const queryParams = new URLSearchParams(location.search)
+  const submissionId = queryParams.get('submissionId')
+
   const [form, setForm] = useState({ submissionContent: '', assignmentContext: '', studentLevel: 'AVERAGE' })
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [edited, setEdited] = useState('')
+  const [submission, setSubmission] = useState(null)
+  const [submissionLoading, setSubmissionLoading] = useState(false)
+  const [savingFeedback, setSavingFeedback] = useState(false)
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
   const LEVELS = ['WEAK', 'AVERAGE', 'GOOD', 'EXCELLENT']
   const LEVEL_LABELS = { WEAK: 'Yếu', AVERAGE: 'Trung bình', GOOD: 'Khá', EXCELLENT: 'Giỏi' }
+
+  useEffect(() => {
+    if (!submissionId) return
+    setSubmissionLoading(true)
+    getSubmissionById(submissionId)
+      .then(r => {
+        const sub = r.data?.data
+        if (sub) {
+          setSubmission(sub)
+          const contextStr = `Bài tập: ${sub.assignment?.title || ''}\nMô tả: ${sub.assignment?.description || ''}\nYêu cầu: ${sub.assignment?.requirements || ''}`
+          let contentStr = ''
+          if (sub.content) contentStr += `Nội dung bài nộp: ${sub.content}\n`
+          if (sub.codeText) contentStr += `Source Code:\n${sub.codeText}\n`
+          if (sub.githubUrl) contentStr += `GitHub URL: ${sub.githubUrl}\n`
+          if (sub.fileUrl) contentStr += `File URL: ${sub.fileUrl}\n`
+
+          setForm(f => ({
+            ...f,
+            assignmentContext: contextStr,
+            submissionContent: contentStr
+          }))
+        }
+      })
+      .catch(() => {
+        toast.error('Không thể tải thông tin bài nộp.')
+      })
+      .finally(() => {
+        setSubmissionLoading(false)
+      })
+  }, [submissionId])
 
   const handle = async () => {
     if (loading) return
@@ -790,9 +995,101 @@ export function AIFeedbackGeneratorPage() {
     }
   }
 
+  const handleSaveFeedback = async () => {
+    if (!submissionId) return
+    setSavingFeedback(true)
+    try {
+      await createFeedback(submissionId, { content: edited })
+      toast.success('Đã lưu feedback vào bài nộp thành công!')
+    } catch (err) {
+      toast.error(err.response?.data?.message ?? 'Lưu feedback thất bại.')
+    } finally {
+      setSavingFeedback(false)
+    }
+  }
+
+  const handleBack = () => {
+    if (location.state?.from) {
+      navigate(location.state.from)
+    } else if (submissionId) {
+      navigate(`/lecturer/grading/${submissionId}`)
+    } else {
+      navigate('/lecturer/submissions')
+    }
+  }
+
   return (
     <div className="space-y-4 max-w-screen-2xl">
+      <button onClick={handleBack}
+        className="flex items-center gap-1.5 text-xs dark:text-gray-400 text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-all mb-1">
+        <ChevronLeft size={14} /> Quay lại chấm điểm
+      </button>
+
       <PageHeader title="AI Feedback" description="Gợi ý phản hồi cho bài nộp của sinh viên" />
+
+      {submissionLoading && (
+        <AICard>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+            <span className="text-xs dark:text-gray-400 text-gray-500">Đang tải thông tin bài làm sinh viên...</span>
+          </div>
+        </AICard>
+      )}
+
+      {submission && !submissionLoading && (
+        <div className="dark:bg-[#161B22]/60 bg-white border dark:border-[#21262D] border-blue-100/60 rounded-xl p-4 space-y-3 shadow-sm">
+          <div className="flex flex-wrap justify-between items-center border-b dark:border-[#21262D] border-gray-150 pb-2 gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold dark:text-blue-400 text-blue-500 bg-blue-500/10 dark:bg-blue-400/10 px-2.5 py-0.5 rounded">Bài tập</span>
+              <h3 className="text-xs font-bold dark:text-white text-gray-800">{submission.assignment?.title}</h3>
+            </div>
+            <span className="text-[10px] dark:text-gray-400 text-gray-500">
+              Sinh viên: <span className="font-semibold">{submission.student?.fullName}</span> ({submission.student?.email})
+            </span>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4 text-xs">
+            <div className="space-y-1.5">
+              <div>
+                <span className="text-[10px] font-bold dark:text-gray-500 text-gray-400 uppercase tracking-wider block">Mô tả bài tập</span>
+                <p className="dark:text-gray-300 text-gray-650 leading-relaxed max-h-24 overflow-y-auto whitespace-pre-wrap">{submission.assignment?.description || 'Chưa có mô tả.'}</p>
+              </div>
+              {submission.assignment?.requirements && (
+                <div>
+                  <span className="text-[10px] font-bold dark:text-gray-500 text-gray-400 uppercase tracking-wider block">Yêu cầu</span>
+                  <p className="dark:text-gray-300 text-gray-650 leading-relaxed max-h-24 overflow-y-auto whitespace-pre-wrap">{submission.assignment.requirements}</p>
+                </div>
+              )}
+              <div className="flex gap-4 text-[10px] dark:text-gray-505 text-gray-400 pt-1">
+                <span>Hạn nộp: {submission.assignment?.dueDate ? new Date(submission.assignment.dueDate).toLocaleString('vi-VN') : '—'}</span>
+                <span>Điểm tối đa: {submission.assignment?.totalScore ?? 10}đ</span>
+              </div>
+            </div>
+            <div className="space-y-1.5 border-t md:border-t-0 md:border-l dark:border-[#21262D] border-gray-150 md:pl-4 pt-3 md:pt-0">
+              <span className="text-[10px] font-bold dark:text-gray-500 text-gray-400 uppercase tracking-wider block">Bài nộp của sinh viên</span>
+              <div className="text-[10px] dark:text-gray-500 text-gray-400 mb-1">
+                Thời gian nộp: {submission.submittedAt ? new Date(submission.submittedAt).toLocaleString('vi-VN') : new Date(submission.createdAt).toLocaleString('vi-VN')}
+              </div>
+              {submission.content && (
+                <div className="dark:bg-[#0D1117]/60 bg-gray-50 p-2.5 rounded-lg border dark:border-[#21262D] border-gray-100 max-h-24 overflow-y-auto whitespace-pre-wrap leading-relaxed dark:text-gray-300 text-gray-650">
+                  {submission.content}
+                </div>
+              )}
+              <div className="flex flex-col gap-1.5 pt-1">
+                {submission.githubUrl && (
+                  <a href={submission.githubUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] text-blue-400 hover:underline">
+                    <ExternalLink size={10} /> Github link: {submission.githubUrl}
+                  </a>
+                )}
+                {submission.fileUrl && (
+                  <a href={submission.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] text-blue-400 hover:underline">
+                    <ExternalLink size={10} /> File đính kèm: {submission.fileUrl}
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-12 gap-4 items-start">
         <div className="lg:col-span-5 space-y-4">
@@ -845,7 +1142,7 @@ export function AIFeedbackGeneratorPage() {
                 <div className="w-4 h-4 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" />
                 <span className="text-xs dark:text-emerald-300 text-emerald-500 font-medium">AI đang phân tích bài nộp...</span>
               </div>
-              <div className="space-y-2">{[100,80,90,65,75].map((w,i) => <div key={i} className="h-3 dark:bg-gray-800 bg-gray-200 rounded animate-pulse" style={{width:`${w}%`}} />)}</div>
+              <div className="space-y-2">{[100,80,90,65,75].map((w,i) => <div key={i} className="h-3 dark:bg-gray-800 bg-gray-255 rounded animate-pulse" style={{width:`${w}%`}} />)}</div>
             </AICard>
           )}
 
@@ -859,13 +1156,13 @@ export function AIFeedbackGeneratorPage() {
                   <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t dark:border-gray-800 border-gray-100">
                     <div>
                       <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wide">Điểm mạnh:</span>
-                      <ul className="list-disc pl-4 space-y-0.5 mt-1 text-xs dark:text-gray-400 text-gray-600">
+                      <ul className="list-disc pl-4 space-y-0.5 mt-1 text-xs dark:text-gray-400 text-gray-650">
                         {result.strengths?.map((st, sIdx) => <li key={sIdx}>{st}</li>)}
                       </ul>
                     </div>
                     <div>
                       <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wide">Cần cải thiện:</span>
-                      <ul className="list-disc pl-4 space-y-0.5 mt-1 text-xs dark:text-gray-400 text-gray-600">
+                      <ul className="list-disc pl-4 space-y-0.5 mt-1 text-xs dark:text-gray-400 text-gray-655">
                         {result.improvementAreas?.map((im, iIdx) => <li key={iIdx}>{im}</li>)}
                       </ul>
                     </div>
@@ -892,7 +1189,16 @@ export function AIFeedbackGeneratorPage() {
                     </div>
                     <span className="text-xs font-bold dark:text-gray-200 text-gray-800">Thư phản hồi gửi cho sinh viên (Chỉnh sửa trước khi copy)</span>
                   </div>
-                  <CopyBtn text={edited} />
+                  <div className="flex items-center gap-2">
+                    {submissionId && (
+                      <button onClick={handleSaveFeedback} disabled={savingFeedback}
+                        className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all disabled:opacity-60">
+                        {savingFeedback ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={11} />}
+                        Lưu feedback vào bài nộp
+                      </button>
+                    )}
+                    <CopyBtn text={edited} />
+                  </div>
                 </div>
                 <textarea
                   className="w-full dark:bg-[#0D1117] bg-gray-50 border dark:border-[#21262D] border-gray-200 rounded-xl p-3 text-xs dark:text-gray-200 text-gray-700 resize-none focus:outline-none focus:ring-1 focus:ring-blue-400/50 transition-all leading-relaxed"
@@ -1073,6 +1379,8 @@ export function AILessonOutlineGeneratorPage() {
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [saveModal, setSaveModal] = useState(null)
+  const [editableOutline, setEditableOutline] = useState(null)
+  const [isEditMode, setIsEditMode] = useState(false)
 
   useEffect(() => {
     getLecturerSubjects().then(r => setSubjects(r.data.data?.subjects ?? r.data.data ?? [])).catch(() => {})
@@ -1086,7 +1394,41 @@ export function AILessonOutlineGeneratorPage() {
     getCLOs({ subjectId: form.subjectId }).then(r => setClos(r.data.data ?? [])).catch(() => {})
   }, [form.subjectId])
 
+  useEffect(() => {
+    setEditableOutline(result)
+    setIsEditMode(false)
+  }, [result])
+
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  const updateOutlineField = (field, value) => {
+    setEditableOutline(prev => ({ ...prev, [field]: value }))
+  }
+
+  const updateSection = (idx, field, value) => {
+    setEditableOutline(prev => {
+      const sections = [...prev.sections]
+      sections[idx] = { ...sections[idx], [field]: value }
+      return { ...prev, sections }
+    })
+  }
+
+  const deleteSection = (idx) => {
+    setEditableOutline(prev => {
+      const sections = prev.sections.filter((_, i) => i !== idx)
+      return { ...prev, sections }
+    })
+  }
+
+  const addSection = () => {
+    setEditableOutline(prev => {
+      const sections = [
+        ...(prev.sections || []),
+        { heading: 'Phần mới', summary: 'Tóm tắt nội dung...', keyPoints: ['Ý chính 1'] }
+      ]
+      return { ...prev, sections }
+    })
+  }
 
   const handle = async () => {
     if (loading) return
@@ -1170,20 +1512,36 @@ export function AILessonOutlineGeneratorPage() {
                 <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
                 <span className="text-xs dark:text-blue-300 text-blue-500 font-medium">AI đang thiết lập giáo án học tập...</span>
               </div>
-              <div className="space-y-2">{[100,75,90,60,85].map((w,i) => <div key={i} className="h-3 dark:bg-gray-800 bg-gray-200 rounded animate-pulse" style={{width:`${w}%`}} />)}</div>
+              <div className="space-y-2">{[100,75,90,60,85].map((w,i) => <div key={i} className="h-3 dark:bg-gray-800 bg-gray-255 rounded animate-pulse" style={{width:`${w}%`}} />)}</div>
             </AICard>
           )}
 
-          {!loading && result && (
+          {!loading && editableOutline && (
             <div className="space-y-4">
               <AICard>
                 <div className="flex items-start justify-between border-b dark:border-gray-800 border-gray-100 pb-3 gap-3">
-                  <div>
-                    <h3 className="text-sm font-bold dark:text-white text-gray-950">{result.title}</h3>
-                    <span className="text-[10px] dark:text-gray-500 text-gray-400">Đề cương chi tiết tạo từ AI</span>
+                  <div className="flex-1">
+                    {isEditMode ? (
+                      <input
+                        className={inputCls}
+                        value={editableOutline.title || ''}
+                        onChange={e => updateOutlineField('title', e.target.value)}
+                        placeholder="Tiêu đề giáo án"
+                      />
+                    ) : (
+                      <h3 className="text-sm font-bold dark:text-white text-gray-955">{editableOutline.title}</h3>
+                    )}
+                    <span className="text-[10px] dark:text-gray-500 text-gray-400 mt-1 block">Đề cương chi tiết tạo từ AI</span>
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <CopyBtn text={JSON.stringify(result, null, 2)} />
+                    <button
+                      onClick={() => setIsEditMode(!isEditMode)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold rounded-lg border dark:bg-[#21262D] bg-gray-100 dark:text-gray-300 text-gray-600 border-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                    >
+                      {isEditMode ? <CheckCircle2 size={11} /> : <Pencil size={11} />}
+                      {isEditMode ? 'Xong' : 'Chỉnh sửa'}
+                    </button>
+                    <CopyBtn text={JSON.stringify(editableOutline, null, 2)} />
                     <button onClick={() => setSaveModal(true)}
                       className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all">
                       <Save size={11} /> Lưu nháp bài học
@@ -1191,56 +1549,154 @@ export function AILessonOutlineGeneratorPage() {
                   </div>
                 </div>
 
-                {result.objectives && (
-                  <div className="py-3">
-                    <span className="text-[10px] font-bold dark:text-gray-400 text-gray-500 uppercase tracking-wide">Mục tiêu bài giảng (Objectives):</span>
+                <div className="py-3">
+                  <span className="text-[10px] font-bold dark:text-gray-400 text-gray-500 uppercase tracking-wide">Mục tiêu bài giảng (Objectives):</span>
+                  {isEditMode ? (
+                    <textarea
+                      className={inputCls + ' mt-1'}
+                      rows={3}
+                      value={editableOutline.objectives ? editableOutline.objectives.join('\n') : ''}
+                      onChange={e => updateOutlineField('objectives', e.target.value.split('\n'))}
+                      placeholder="Mỗi dòng là một mục tiêu"
+                    />
+                  ) : (
                     <ul className="list-disc pl-4 space-y-0.5 mt-1 text-xs dark:text-gray-300 text-gray-700">
-                      {result.objectives.map((obj, oIdx) => <li key={oIdx}>{obj}</li>)}
+                      {editableOutline.objectives?.map((obj, oIdx) => <li key={oIdx}>{obj}</li>)}
                     </ul>
-                  </div>
-                )}
+                  )}
+                </div>
 
-                {result.sections && (
+                {editableOutline.sections && (
                   <div className="border-t dark:border-gray-800 border-gray-100 py-3 space-y-3">
                     <span className="text-[10px] font-bold dark:text-gray-400 text-gray-500 uppercase tracking-wide">Các chương / phần giảng dạy chính:</span>
-                    {result.sections.map((sec, sIdx) => (
-                      <div key={sIdx} className="bg-gray-50 dark:bg-gray-900/40 p-3.5 rounded-xl border dark:border-gray-800/40 border-gray-200/60">
-                        <h5 className="text-xs font-bold dark:text-gray-200 text-gray-800">{sec.heading}</h5>
-                        <p className="text-[11px] dark:text-gray-400 text-gray-600 mt-1 leading-relaxed">{sec.summary}</p>
-                        {sec.keyPoints && (
-                          <div className="mt-2 pl-2 border-l border-blue-500/40 space-y-0.5">
-                            {sec.keyPoints.map((kp, kIdx) => <div key={kIdx} className="text-[10px] dark:text-gray-500 text-gray-500">• {kp}</div>)}
+                    {editableOutline.sections.map((sec, sIdx) => (
+                      <div key={sIdx} className="bg-gray-50 dark:bg-gray-900/40 p-3.5 rounded-xl border dark:border-gray-800/40 border-gray-200/60 space-y-2">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1 space-y-2">
+                            {isEditMode ? (
+                              <>
+                                <div>
+                                  <label className={labelCls}>Tên phần học</label>
+                                  <input
+                                    className={inputCls}
+                                    value={sec.heading || ''}
+                                    onChange={e => updateSection(sIdx, 'heading', e.target.value)}
+                                    placeholder="Tên phần học"
+                                  />
+                                </div>
+                                <div>
+                                  <label className={labelCls}>Tóm tắt</label>
+                                  <textarea
+                                    className={inputCls}
+                                    rows={2}
+                                    value={sec.summary || ''}
+                                    onChange={e => updateSection(sIdx, 'summary', e.target.value)}
+                                    placeholder="Tóm tắt nội dung..."
+                                  />
+                                </div>
+                                <div>
+                                  <label className={labelCls}>Ý chính (mỗi dòng một ý)</label>
+                                  <textarea
+                                    className={inputCls}
+                                    rows={2}
+                                    value={sec.keyPoints ? sec.keyPoints.join('\n') : ''}
+                                    onChange={e => updateSection(sIdx, 'keyPoints', e.target.value.split('\n'))}
+                                    placeholder="Ý chính..."
+                                  />
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <h5 className="text-xs font-bold dark:text-gray-200 text-gray-800">{sec.heading}</h5>
+                                <p className="text-[11px] dark:text-gray-400 text-gray-600 mt-1 leading-relaxed">{sec.summary}</p>
+                                {sec.keyPoints && (
+                                  <div className="mt-2 pl-2 border-l border-blue-500/40 space-y-0.5">
+                                    {sec.keyPoints.map((kp, kIdx) => <div key={kIdx} className="text-[10px] dark:text-gray-500 text-gray-500">• {kp}</div>)}
+                                  </div>
+                                )}
+                              </>
+                            )}
                           </div>
-                        )}
+                          {isEditMode && (
+                            <button
+                              onClick={() => deleteSection(sIdx)}
+                              className="p-1 rounded text-rose-500 hover:bg-rose-500/10 dark:hover:bg-rose-500/5 transition-colors flex-shrink-0"
+                              title="Xóa phần này"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
+                    {isEditMode && (
+                      <button
+                        onClick={addSection}
+                        className="w-full flex items-center justify-center gap-1.5 py-1.5 border border-dashed dark:border-gray-800 border-gray-200 dark:hover:border-blue-500/40 hover:border-blue-400 rounded-lg text-[11px] dark:text-gray-400 text-gray-500 hover:text-blue-500 transition-all"
+                      >
+                        <Plus size={11} /> Thêm phần mới
+                      </button>
+                    )}
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-4 border-t dark:border-gray-800 border-gray-100 pt-3">
-                  {result.keyConcepts && (
+                  {isEditMode ? (
+                    <div>
+                      <label className={labelCls}>Khái niệm cốt lõi (mỗi dòng một khái niệm)</label>
+                      <textarea
+                        className={inputCls}
+                        rows={3}
+                        value={editableOutline.keyConcepts ? editableOutline.keyConcepts.join('\n') : ''}
+                        onChange={e => updateOutlineField('keyConcepts', e.target.value.split('\n'))}
+                        placeholder="Khái niệm..."
+                      />
+                    </div>
+                  ) : editableOutline.keyConcepts && (
                     <div>
                       <span className="text-[10px] font-bold dark:text-gray-400 text-gray-500 uppercase tracking-wide">Khái niệm cốt lõi:</span>
                       <ul className="list-disc pl-4 space-y-0.5 mt-1 text-[11px] dark:text-gray-400 text-gray-600">
-                        {result.keyConcepts.map((kc, kcIdx) => <li key={kcIdx}>{kc}</li>)}
+                        {editableOutline.keyConcepts.map((kc, kcIdx) => <li key={kcIdx}>{kc}</li>)}
                       </ul>
                     </div>
                   )}
 
-                  {result.activities && (
+                  {isEditMode ? (
+                    <div>
+                      <label className={labelCls}>Hoạt động lớp học (mỗi dòng một hoạt động)</label>
+                      <textarea
+                        className={inputCls}
+                        rows={3}
+                        value={editableOutline.activities ? editableOutline.activities.join('\n') : ''}
+                        onChange={e => updateOutlineField('activities', e.target.value.split('\n'))}
+                        placeholder="Hoạt động..."
+                      />
+                    </div>
+                  ) : editableOutline.activities && (
                     <div>
                       <span className="text-[10px] font-bold dark:text-gray-400 text-gray-500 uppercase tracking-wide">Hoạt động lớp học:</span>
                       <ul className="list-disc pl-4 space-y-0.5 mt-1 text-[11px] dark:text-gray-400 text-gray-600">
-                        {result.activities.map((act, actIdx) => <li key={actIdx}>{act}</li>)}
+                        {editableOutline.activities.map((act, actIdx) => <li key={actIdx}>{act}</li>)}
                       </ul>
                     </div>
                   )}
                 </div>
 
-                {result.assessmentSuggestion && (
+                {isEditMode ? (
+                  <div className="border-t dark:border-gray-800 border-gray-100 pt-3 mt-3">
+                    <label className={labelCls}>Đề xuất bài đánh giá cuối buổi</label>
+                    <textarea
+                      className={inputCls}
+                      rows={3}
+                      value={editableOutline.assessmentSuggestion || ''}
+                      onChange={e => updateOutlineField('assessmentSuggestion', e.target.value)}
+                      placeholder="Bài tập đánh giá..."
+                    />
+                  </div>
+                ) : editableOutline.assessmentSuggestion && (
                   <div className="border-t dark:border-gray-800 border-gray-100 pt-3 mt-3">
                     <span className="text-[10px] font-bold dark:text-gray-400 text-gray-500 uppercase tracking-wide">Đề xuất bài đánh giá cuối buổi:</span>
-                    <p className="text-xs dark:text-gray-300 text-gray-700 leading-relaxed mt-1">{result.assessmentSuggestion}</p>
+                    <p className="text-xs dark:text-gray-300 text-gray-700 leading-relaxed mt-1">{editableOutline.assessmentSuggestion}</p>
                   </div>
                 )}
               </AICard>
@@ -1254,7 +1710,8 @@ export function AILessonOutlineGeneratorPage() {
       {saveModal && (
         <SaveLessonOutlineModal
           aiGenerationId={result.generationId}
-          title={result.title}
+          title={editableOutline.title || result.title}
+          content={JSON.stringify(editableOutline, null, 2)}
           subjects={subjects}
           onClose={() => setSaveModal(false)}
         />

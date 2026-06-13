@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BookOpen, Search, ChevronRight, FileText, ClipboardList, GraduationCap, X } from 'lucide-react'
 import {
   getLecturerSubjects, getLecturerSubjectById,
@@ -118,11 +119,11 @@ function SubjectDetailModal({ subjectId, onClose }) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function LecturerSubjectPage() {
+  const navigate = useNavigate()
   const [subjects, setSubjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
-  const [selected, setSelected] = useState(null)
 
   const fetch = useCallback(async () => {
     setLoading(true)
@@ -170,7 +171,7 @@ export default function LecturerSubjectPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {subjects.map(s => (
             <div key={s.id}
-              onClick={() => setSelected(s.id)}
+              onClick={() => navigate(`/lecturer/subjects/${s.id}`)}
               className="group dark:bg-[#161B22]/60 bg-white border dark:border-[#21262D] border-blue-100/80 rounded-xl p-4 hover:border-blue-300 dark:hover:border-blue-500/40 hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden">
 
               {/* Soft glow */}
@@ -212,8 +213,6 @@ export default function LecturerSubjectPage() {
           ))}
         </div>
       )}
-
-      {selected && <SubjectDetailModal subjectId={selected} onClose={() => setSelected(null)} />}
     </div>
   )
 }

@@ -16,6 +16,7 @@ const gradeSubmission = async (submissionId, gradeData, lecturerId) => {
     include: {
       assignment: {
         select: {
+          title: true,
           totalScore: true,
         },
       },
@@ -67,6 +68,14 @@ const gradeSubmission = async (submissionId, gradeData, lecturerId) => {
     });
 
     return grade;
+  });
+
+  const notificationService = require("./notification.service");
+  await notificationService.createNotificationForUser(submission.studentId, {
+    type: "GRADE",
+    title: "Bài tập đã được chấm điểm",
+    message: `Bài nộp ${submission.assignment.title} của bạn đã được chấm`,
+    relatedUrl: "/student/feedback",
   });
 
   return result;

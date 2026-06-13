@@ -54,6 +54,14 @@ const createSubmissionFeedback = async (submissionId, feedbackData, lecturerId) 
         },
       },
     },
+    include: {
+      assignment: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+    },
   });
 
   if (!submission) {
@@ -70,6 +78,14 @@ const createSubmissionFeedback = async (submissionId, feedbackData, lecturerId) 
       submissionId,
       lecturerId,
     },
+  });
+
+  const notificationService = require("./notification.service");
+  await notificationService.createNotificationForUser(submission.studentId, {
+    type: "FEEDBACK",
+    title: "Phản hồi bài nộp mới",
+    message: `Bạn có phản hồi mới cho bài tập ${submission.assignment.title}`,
+    relatedUrl: `/student/assignments/${submission.assignment.id}`,
   });
 
   return newFeedback;

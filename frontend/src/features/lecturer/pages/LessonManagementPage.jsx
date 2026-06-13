@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Plus, Search, FileText, Pencil, Trash2, Archive, Eye, MoreHorizontal } from 'lucide-react'
+import { Plus, Search, FileText, Pencil, Trash2, Archive, Eye, MoreHorizontal, Sparkles } from 'lucide-react'
 import {
   getLessons, createLesson, updateLesson, deleteLesson, updateLessonStatus,
 } from '../../../services/lesson.api'
@@ -12,6 +13,7 @@ import {
   Badge, Sk, EmptyState, ErrorBanner, Pagination, inputCls, labelCls,
 } from '../components/LecturerUI'
 import PortalDropdown from '../../../components/common/PortalDropdown'
+import ImportAIModal from '../components/ImportAIModal'
 
 const STATUSES = ['DRAFT', 'PUBLISHED', 'ARCHIVED']
 const STATUS_LABELS = { DRAFT: 'Nháp', PUBLISHED: 'Đã đăng', ARCHIVED: 'Lưu trữ' }
@@ -106,12 +108,13 @@ function LessonModal({ mode, initial, subjects, onClose, onSave, saving, error }
   )
 }
 
-function ActionMenu({ lesson, onEdit, onDelete, onStatus }) {
+function ActionMenu({ lesson, onEdit, onDelete, onStatus, onViewDetail }) {
   const nextStatus = lesson.status === 'PUBLISHED' ? 'ARCHIVED' : lesson.status === 'DRAFT' ? 'PUBLISHED' : 'DRAFT'
   const nextLabel  = lesson.status === 'PUBLISHED' ? 'Lưu trữ' : lesson.status === 'DRAFT' ? 'Đăng bài' : 'Khôi phục'
 
   return (
     <PortalDropdown>
+      <button onClick={() => onViewDetail(lesson)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:text-gray-300 text-gray-600 dark:hover:bg-[#21262D] hover:bg-gray-50"><Eye size={11} /> Chi tiết</button>
       <button onClick={() => onEdit(lesson)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:text-gray-300 text-gray-600 dark:hover:bg-[#21262D] hover:bg-gray-50"><Pencil size={11} /> Chỉnh sửa</button>
       <button onClick={() => onStatus(lesson, nextStatus)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:text-gray-300 text-gray-600 dark:hover:bg-[#21262D] hover:bg-gray-50"><Archive size={11} /> {nextLabel}</button>
       <div className="border-t dark:border-[#21262D] border-gray-100 my-0.5" />
@@ -121,6 +124,7 @@ function ActionMenu({ lesson, onEdit, onDelete, onStatus }) {
 }
 
 export default function LessonManagementPage() {
+  const navigate = useNavigate()
   const [lessons, setLessons] = useState([])
   const [subjects, setSubjects] = useState([])
   const [meta, setMeta] = useState({ total: 0, page: 1, totalPages: 1 })
@@ -133,6 +137,7 @@ export default function LessonManagementPage() {
   const [modal, setModal] = useState(null)
   const [saving, setSaving] = useState(false)
   const [modalErr, setModalErr] = useState('')
+  const [showImportAIModal, setShowImportAIModal] = useState(false)
 
   const fetch = useCallback(async () => {
     setLoading(true)
@@ -189,10 +194,16 @@ export default function LessonManagementPage() {
         description="Quản lý nội dung bài giảng"
         stats={[{ label: 'Tổng', value: meta.total || lessons.length }]}
         actions={
-          <button onClick={() => { setModal({ type: 'create' }); setModalErr('') }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-all shadow-sm">
-            <Plus size={13} /> Tạo bài học
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowImportAIModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white text-xs font-semibold rounded-lg transition-all shadow-sm">
+              <Sparkles size={13} /> Import từ AI History
+            </button>
+            <button onClick={() => { setModal({ type: 'create' }); setModalErr('') }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-all shadow-sm">
+              <Plus size={13} /> Tạo bài học
+            </button>
+          </div>
         }
       />
 
@@ -230,9 +241,9 @@ export default function LessonManagementPage() {
                 </div>
                 <div>
                   <div
-                    onClick={() => { setModal({ type: 'edit', data: l }); setModalErr('') }}
+                    onClick={() => navigate(`/lecturer/lessons/${l.id}`, { state: { from: location.pathname } })}
                     className="text-xs font-medium dark:text-gray-200 text-gray-700 hover:text-blue-500 dark:hover:text-blue-400 hover:underline cursor-pointer truncate max-w-48 transition-colors"
-                    title="Bấm để chỉnh sửa"
+                    title="Xem chi tiết bài học"
                   >
                     {l.title}
                   </div>
@@ -246,6 +257,7 @@ export default function LessonManagementPage() {
             <Td><span className="text-[10px] dark:text-gray-500 text-gray-400">{formatDate(l.createdAt)}</span></Td>
             <Td>
               <ActionMenu lesson={l}
+                onViewDetail={l => navigate(`/lecturer/lessons/${l.id}`, { state: { from: location.pathname } })}
                 onEdit={l => { setModal({ type: 'edit', data: l }); setModalErr('') }}
                 onDelete={l => setModal({ type: 'delete', data: l })}
                 onStatus={handleStatus}
@@ -273,6 +285,13 @@ export default function LessonManagementPage() {
           </div>
         </Modal>
       )}
+
+      <ImportAIModal
+        isOpen={showImportAIModal}
+        onClose={() => setShowImportAIModal(false)}
+        type="LESSON"
+        onImportSuccess={fetch}
+      />
     </div>
   )
 }

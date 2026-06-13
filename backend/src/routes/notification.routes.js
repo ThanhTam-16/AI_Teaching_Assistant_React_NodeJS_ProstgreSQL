@@ -12,4 +12,9 @@ router.get("/student", authorizeRoles("STUDENT"), notificationController.getStud
 router.patch("/student/read-all", authorizeRoles("STUDENT"), notificationController.markAllAsRead);
 router.patch("/student/:id/read", authorizeRoles("STUDENT"), notificationController.markAsRead);
 
+// --- LECTURER PATHS ---
+router.get("/lecturer", authorizeRoles("LECTURER"), notificationController.getLecturerNotifications);
+router.patch("/lecturer/read-all", authorizeRoles("LECTURER"), notificationController.markAllLecturerNotificationsAsRead);
+router.patch("/lecturer/:id/read", authorizeRoles("LECTURER"), notificationController.markLecturerNotificationAsRead);
+
 module.exports = router;

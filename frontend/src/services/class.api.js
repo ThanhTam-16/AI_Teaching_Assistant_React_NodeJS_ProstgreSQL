@@ -8,6 +8,8 @@ export const updateClassStatus       = (id, status) => api.patch(`/classes/lectu
 export const getStudentsInClass      = (id)         => api.get(`/classes/lecturer/${id}/students`)
 export const addStudentToClass       = (id, data)   => api.post(`/classes/lecturer/${id}/students`, data)
 export const removeStudentFromClass  = (classId, studentId) => api.delete(`/classes/lecturer/${classId}/students/${studentId}`)
+export const getClassProgress        = (id, subjectId) => api.get(`/classes/lecturer/${id}/progress`, { params: { subjectId } })
+export const getStudentProgressInClass = (classId, studentId) => api.get(`/classes/lecturer/${classId}/students/${studentId}/progress`)
 
 // ── Student Classes ──────────────────────────────────────────────────────────
 export const getStudentClasses          = (p = {}) => api.get('/classes/student', { params: p })

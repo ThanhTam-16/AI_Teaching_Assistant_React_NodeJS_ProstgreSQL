@@ -37,8 +37,46 @@ const markAllAsRead = async (req, res, next) => {
   }
 };
 
+const getLecturerNotifications = async (req, res, next) => {
+  try {
+    const { page, limit, skip } = getPaginationParams(req.query);
+    const lecturerId = req.user.id;
+    const result = await notificationService.getLecturerNotifications({ lecturerId, page, limit, skip });
+
+    return successResponse(res, "Lecturer notifications fetched successfully", result, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const markLecturerNotificationAsRead = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const lecturerId = req.user.id;
+    const notification = await notificationService.markAsRead(id, lecturerId);
+
+    return successResponse(res, "Notification marked as read successfully", notification, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const markAllLecturerNotificationsAsRead = async (req, res, next) => {
+  try {
+    const lecturerId = req.user.id;
+    const result = await notificationService.markAllAsRead(lecturerId);
+
+    return successResponse(res, "All notifications marked as read successfully", result, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getStudentNotifications,
   markAsRead,
   markAllAsRead,
+  getLecturerNotifications,
+  markLecturerNotificationAsRead,
+  markAllLecturerNotificationsAsRead,
 };

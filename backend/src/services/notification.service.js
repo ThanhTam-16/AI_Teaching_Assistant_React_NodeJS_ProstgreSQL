@@ -45,8 +45,72 @@ const markAllAsRead = async (studentId) => {
   return { count: result.count };
 };
 
+const createNotificationForUser = async (userId, { type, title, message, relatedUrl }) => {
+  try {
+    return await prisma.notification.create({
+      data: {
+        userId,
+        type: type || "SYSTEM",
+        title,
+        message,
+        relatedUrl,
+        isRead: false,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating notification for user:", error);
+  }
+};
+
+const notifyClassStudents = async (classId, { type, title, message, relatedUrl }) => {
+  try {
+    const enrollments = await prisma.classEnrollment.findMany({
+      where: { classId },
+      select: { studentId: true },
+    });
+
+    const studentIds = enrollments.map((e) => e.studentId);
+    if (studentIds.length === 0) return [];
+
+    await prisma.notification.createMany({
+      data: studentIds.map((studentId) => ({
+        userId: studentId,
+        type: type || "SYSTEM",
+        title,
+        message,
+        relatedUrl,
+        isRead: false,
+      })),
+    });
+
+    return studentIds;
+  } catch (error) {
+    console.error("Error creating notifications for class students:", error);
+    return [];
+  }
+};
+
+const getLecturerNotifications = async ({ lecturerId, page, limit, skip }) => {
+  const [notifications, total] = await Promise.all([
+    prisma.notification.findMany({
+      where: { userId: lecturerId },
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.notification.count({
+      where: { userId: lecturerId },
+    }),
+  ]);
+
+  return formatPaginatedResponse(notifications, total, page, limit, "notifications");
+};
+
 module.exports = {
   getStudentNotifications,
   markAsRead,
   markAllAsRead,
+  createNotificationForUser,
+  notifyClassStudents,
+  getLecturerNotifications,
 };

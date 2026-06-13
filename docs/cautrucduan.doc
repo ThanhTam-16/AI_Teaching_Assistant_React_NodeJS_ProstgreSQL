@@ -10,25 +10,12 @@ AI Teaching Assistant/
 │   │
 │   ├── src/
 │   │   ├── config/
+│   │   │   ├── ai.config.js                               // ĐÃ CÓ - mới thêm cấu hình AI/API key
 │   │   │   ├── database.js                                // ĐÃ CÓ
-│   │   │   ├── env.js                                     // ĐÃ CÓ
-│   │   │   └── ai.config.js                               // CHƯA CÓ
-│   │   │
-│   │   ├── models/                                        // CHƯA CÓ
-│   │   │   ├── user.model.js                              // CHƯA CÓ
-│   │   │   ├── class.model.js                             // CHƯA CÓ
-│   │   │   ├── subject.model.js                           // CHƯA CÓ
-│   │   │   ├── clo.model.js                               // CHƯA CÓ
-│   │   │   ├── lesson.model.js                            // CHƯA CÓ
-│   │   │   ├── assignment.model.js                        // CHƯA CÓ
-│   │   │   ├── submission.model.js                        // CHƯA CÓ
-│   │   │   ├── grade.model.js                             // CHƯA CÓ
-│   │   │   ├── feedback.model.js                          // CHƯA CÓ
-│   │   │   ├── notification.model.js                      // CHƯA CÓ
-│   │   │   └── aiGeneration.model.js                      // CHƯA CÓ
+│   │   │   └── env.js                                     // ĐÃ CÓ
 │   │   │
 │   │   ├── controllers/
-│   │   │   ├── ai.controller.js                           // ĐÃ CÓ
+│   │   │   ├── ai.controller.js                           // ĐÃ CÓ - đã cập nhật xử lý AI
 │   │   │   ├── assignment.controller.js                   // ĐÃ CÓ
 │   │   │   ├── auth.controller.js                         // ĐÃ CÓ
 │   │   │   ├── class.controller.js                        // ĐÃ CÓ
@@ -38,8 +25,8 @@ AI Teaching Assistant/
 │   │   │   ├── grade.controller.js                        // ĐÃ CÓ
 │   │   │   ├── lesson.controller.js                       // ĐÃ CÓ
 │   │   │   ├── notification.controller.js                 // ĐÃ CÓ
-│   │   │   ├── quiz.controller.js                         // ĐÃ CÓ - file thêm cho quiz
-│   │   │   ├── report.controller.js                       // ĐÃ CÓ - file thêm cho report
+│   │   │   ├── quiz.controller.js                         // ĐÃ CÓ
+│   │   │   ├── report.controller.js                       // ĐÃ CÓ
 │   │   │   ├── setting.controller.js                      // ĐÃ CÓ
 │   │   │   ├── subject.controller.js                      // ĐÃ CÓ
 │   │   │   ├── submission.controller.js                   // ĐÃ CÓ
@@ -53,7 +40,7 @@ AI Teaching Assistant/
 │   │   │   └── upload.middleware.js                       // CHƯA CÓ
 │   │   │
 │   │   ├── routes/
-│   │   │   ├── ai.routes.js                               // ĐÃ CÓ
+│   │   │   ├── ai.routes.js                               // ĐÃ CÓ - đã cập nhật route AI
 │   │   │   ├── assignment.routes.js                       // ĐÃ CÓ
 │   │   │   ├── auth.routes.js                             // ĐÃ CÓ
 │   │   │   ├── class.routes.js                            // ĐÃ CÓ
@@ -64,15 +51,19 @@ AI Teaching Assistant/
 │   │   │   ├── index.js                                   // ĐÃ CÓ
 │   │   │   ├── lesson.routes.js                           // ĐÃ CÓ
 │   │   │   ├── notification.routes.js                     // ĐÃ CÓ
-│   │   │   ├── quiz.routes.js                             // ĐÃ CÓ - file thêm cho quiz
-│   │   │   ├── report.routes.js                           // ĐÃ CÓ - file thêm cho report
+│   │   │   ├── quiz.routes.js                             // ĐÃ CÓ
+│   │   │   ├── report.routes.js                           // ĐÃ CÓ
 │   │   │   ├── setting.routes.js                          // ĐÃ CÓ
 │   │   │   ├── subject.routes.js                          // ĐÃ CÓ
 │   │   │   ├── submission.routes.js                       // ĐÃ CÓ
 │   │   │   └── user.routes.js                             // ĐÃ CÓ
 │   │   │
 │   │   ├── services/
-│   │   │   ├── ai.service.js                              // ĐÃ CÓ
+│   │   │   ├── ai.service.js                              // ĐÃ CÓ - đã cập nhật logic AI
+│   │   │   ├── aiPrompt.service.js                        // ĐÃ CÓ - mới thêm xử lý prompt AI
+│   │   │   ├── aiProvider.service.js                      // ĐÃ CÓ - mới thêm quản lý provider AI
+│   │   │   ├── gemini.provider.js                         // ĐÃ CÓ - mới thêm provider Gemini
+│   │   │   ├── mock.provider.js                           // ĐÃ CÓ - mới thêm provider giả lập/test
 │   │   │   ├── assignment.service.js                      // ĐÃ CÓ
 │   │   │   ├── auth.service.js                            // ĐÃ CÓ
 │   │   │   ├── class.service.js                           // ĐÃ CÓ
@@ -82,10 +73,10 @@ AI Teaching Assistant/
 │   │   │   ├── grade.service.js                           // ĐÃ CÓ
 │   │   │   ├── lesson.service.js                          // ĐÃ CÓ
 │   │   │   ├── notification.service.js                    // ĐÃ CÓ
-│   │   │   ├── quiz.service.js                            // ĐÃ CÓ - file thêm cho quiz
-│   │   │   ├── report.service.js                          // ĐÃ CÓ - file thêm cho report
+│   │   │   ├── quiz.service.js                            // ĐÃ CÓ
+│   │   │   ├── report.service.js                          // ĐÃ CÓ
 │   │   │   ├── setting.service.js                         // ĐÃ CÓ
-│   │   │   ├── studentHelper.service.js                   // ĐÃ CÓ - file thêm hỗ trợ student
+│   │   │   ├── studentHelper.service.js                   // ĐÃ CÓ
 │   │   │   ├── subject.service.js                         // ĐÃ CÓ
 │   │   │   ├── submission.service.js                      // ĐÃ CÓ
 │   │   │   └── user.service.js                            // ĐÃ CÓ
@@ -99,6 +90,7 @@ AI Teaching Assistant/
 │   │   │   └── constants.js                               // CHƯA CÓ
 │   │   │
 │   │   ├── validations/
+│   │   │   ├── ai.validation.js                           // ĐÃ CÓ - mới thêm validation cho AI
 │   │   │   ├── assignment.validation.js                   // ĐÃ CÓ
 │   │   │   ├── clo.validation.js                          // ĐÃ CÓ
 │   │   │   ├── lesson.validation.js                       // ĐÃ CÓ
@@ -113,8 +105,7 @@ AI Teaching Assistant/
 │   │   │   ├── quiz.validation.js                         // CHƯA CÓ
 │   │   │   ├── report.validation.js                       // CHƯA CÓ
 │   │   │   ├── dashboard.validation.js                    // CHƯA CÓ
-│   │   │   ├── notification.validation.js                 // CHƯA CÓ
-│   │   │   └── ai.validation.js                           // CHƯA CÓ
+│   │   │   └── notification.validation.js                 // CHƯA CÓ
 │   │   │
 │   │   ├── uploads/                                       // CHƯA CÓ
 │   │   │   ├── avatars/                                   // CHƯA CÓ
@@ -185,24 +176,28 @@ AI Teaching Assistant/
 │   │   │   └── ThemeContext.jsx                           // ĐÃ CÓ
 │   │   │
 │   │   ├── features/
-│   │   │   ├── admin/
+│   │   │   ├── lecturer/
 │   │   │   │   ├── components/
-│   │   │   │   │   ├── AdminHeader.jsx                    // ĐÃ CÓ
-│   │   │   │   │   ├── AdminSidebar.jsx                   // ĐÃ CÓ
-│   │   │   │   │   └── StatCard.jsx                       // ĐÃ CÓ
+│   │   │   │   │   ├── LecturerHeader.jsx                 // ĐÃ CÓ
+│   │   │   │   │   ├── LecturerSidebar.jsx                // ĐÃ CÓ - đã cập nhật menu AI
+│   │   │   │   │   ├── LecturerStatCard.jsx               // ĐÃ CÓ
+│   │   │   │   │   ├── lecturerTokens.js                  // ĐÃ CÓ
+│   │   │   │   │   └── LecturerUI.jsx                     // ĐÃ CÓ
 │   │   │   │   │
 │   │   │   │   ├── layouts/
-│   │   │   │   │   └── AdminLayout.jsx                    // ĐÃ CÓ
+│   │   │   │   │   └── LecturerLayout.jsx                 // ĐÃ CÓ
 │   │   │   │   │
 │   │   │   │   └── pages/
-│   │   │   │       ├── AdminOverviewPage.jsx              // ĐÃ CÓ
-│   │   │   │       ├── AISettingsPage.jsx                 // ĐÃ CÓ
-│   │   │   │       ├── LecturerManagementPage.jsx         // ĐÃ CÓ
-│   │   │   │       ├── RolePages.jsx                      // ĐÃ CÓ
-│   │   │   │       ├── StudentManagementPage.jsx          // ĐÃ CÓ
-│   │   │   │       ├── SubjectManagementPage.jsx          // ĐÃ CÓ
-│   │   │   │       ├── SystemSettingsPage.jsx             // ĐÃ CÓ
-│   │   │   │       └── UserManagementPage.jsx             // ĐÃ CÓ
+│   │   │   │       ├── ai/
+│   │   │   │       │   └── AIPages.jsx                    // ĐÃ CÓ - đã cập nhật gọi AI API
+│   │   │   │       ├── AssignmentManagementPage.jsx       // ĐÃ CÓ
+│   │   │   │       ├── ClassManagementPage.jsx            // ĐÃ CÓ
+│   │   │   │       ├── CLOManagementPage.jsx              // ĐÃ CÓ
+│   │   │   │       ├── LecturerOverviewPage.jsx           // ĐÃ CÓ
+│   │   │   │       ├── LecturerReportPage.jsx             // ĐÃ CÓ
+│   │   │   │       ├── LecturerSubjectPage.jsx            // ĐÃ CÓ
+│   │   │   │       ├── LessonManagementPage.jsx           // ĐÃ CÓ
+│   │   │   │       └── SubmissionPages.jsx                // ĐÃ CÓ
 │   │   │   │
 │   │   │   ├── lecturer/
 │   │   │   │   ├── components/
@@ -270,7 +265,7 @@ AI Teaching Assistant/
 │   │   │
 │   │   ├── services/
 │   │   │   ├── admin.api.js                               // ĐÃ CÓ
-│   │   │   ├── ai.api.js                                  // ĐÃ CÓ
+│   │   │   ├── ai.api.js                                  // ĐÃ CÓ - đã cập nhật gọi API AI
 │   │   │   ├── api.js                                     // ĐÃ CÓ
 │   │   │   ├── assignment.api.js                          // ĐÃ CÓ
 │   │   │   ├── auth.api.js                                // ĐÃ CÓ
@@ -280,10 +275,10 @@ AI Teaching Assistant/
 │   │   │   ├── feedback.api.js                            // ĐÃ CÓ
 │   │   │   ├── grade.api.js                               // ĐÃ CÓ
 │   │   │   ├── lesson.api.js                              // ĐÃ CÓ
-│   │   │   ├── notification.api.js                        // ĐÃ CÓ 
-│   │   │   ├── quiz.api.js                                // ĐÃ CÓ 
+│   │   │   ├── notification.api.js                        // ĐÃ CÓ
+│   │   │   ├── quiz.api.js                                // ĐÃ CÓ
 │   │   │   ├── report.api.js                              // ĐÃ CÓ
-│   │   │   ├── student.api.js                             // ĐÃ CÓ 
+│   │   │   ├── student.api.js                             // ĐÃ CÓ
 │   │   │   ├── subject.api.js                             // ĐÃ CÓ
 │   │   │   ├── submission.api.js                          // ĐÃ CÓ
 │   │   │   └── user.api.js                                // ĐÃ CÓ

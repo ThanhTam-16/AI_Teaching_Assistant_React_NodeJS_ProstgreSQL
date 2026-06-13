@@ -166,6 +166,8 @@ model Class {
 
   assignments Assignment[]
 
+  quizzes Quiz[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -482,9 +484,13 @@ model Quiz {
   title       String
   description String?
   difficulty  Difficulty @default(MEDIUM)
+  status      ContentStatus @default(DRAFT)
 
   subjectId String
   subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  classId String?
+  class   Class?  @relation(fields: [classId], references: [id], onDelete: Cascade)
 
   lessonId String?
   lesson   Lesson? @relation(fields: [lessonId], references: [id])

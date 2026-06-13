@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Plus, Search, Users, Eye, Pencil, MoreHorizontal, UserPlus, UserMinus, X, Check } from 'lucide-react'
+import { Plus, Search, Users, Eye, Pencil, MoreHorizontal, UserPlus, UserMinus, X, Check, GraduationCap } from 'lucide-react'
 import {
   getLecturerClasses, getLecturerClassById, createClass, updateClass,
   updateClassStatus, getStudentsInClass, addStudentToClass, removeStudentFromClass,
@@ -149,9 +150,10 @@ function StudentsModal({ cls, onClose }) {
 }
 
 // ── Action menu ───────────────────────────────────────────────────────────────
-function ActionMenu({ cls, onEdit, onViewStudents, onToggleStatus }) {
+function ActionMenu({ cls, onEdit, onViewStudents, onToggleStatus, onViewDetail }) {
   return (
     <PortalDropdown width="w-40">
+      <button onClick={() => onViewDetail(cls)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:text-gray-300 text-gray-600 dark:hover:bg-[#21262D] hover:bg-gray-50 transition-all"><Eye size={11} /> Chi tiết</button>
       <button onClick={() => onEdit(cls)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:text-gray-300 text-gray-600 dark:hover:bg-[#21262D] hover:bg-gray-50 transition-all"><Pencil size={11} /> Chỉnh sửa</button>
       <button onClick={() => onViewStudents(cls)} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs dark:text-gray-300 text-gray-600 dark:hover:bg-[#21262D] hover:bg-gray-50 transition-all"><Users size={11} /> Sinh viên</button>
       <div className="border-t dark:border-[#21262D] border-gray-100 my-0.5" />
@@ -165,6 +167,8 @@ function ActionMenu({ cls, onEdit, onViewStudents, onToggleStatus }) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function ClassManagementPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [classes, setClasses] = useState([])
   const [meta, setMeta] = useState({ total: 0, page: 1, totalPages: 1 })
   const [loading, setLoading] = useState(true)
@@ -211,18 +215,31 @@ export default function ClassManagementPage() {
     } catch { toast.error('Không thể thay đổi trạng thái.') }
   }
 
+  const flatClassSubjects = []
+  classes.forEach(c => {
+    if (c.subjects && c.subjects.length > 0) {
+      c.subjects.forEach(sub => {
+        flatClassSubjects.push({
+          ...c,
+          subject: sub,
+          uniqueKey: `${c.id}-${sub.id}`
+        })
+      })
+    } else {
+      flatClassSubjects.push({
+        ...c,
+        subject: null,
+        uniqueKey: c.id
+      })
+    }
+  })
+
   return (
     <div className="space-y-4 max-w-screen-2xl">
       <PageHeader
         title="Lớp học"
         description="Quản lý các lớp bạn phụ trách"
-        stats={[{ label: 'Tổng', value: meta.total }]}
-        actions={
-          <button onClick={() => { setModal({ type: 'create' }); setModalErr('') }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-all shadow-sm">
-            <Plus size={13} /> Tạo lớp
-          </button>
-        }
+        stats={[{ label: 'Tổng lớp/môn', value: flatClassSubjects.length }]}
       />
 
       {/* Search */}
@@ -236,39 +253,39 @@ export default function ClassManagementPage() {
         {loading ? Array.from({ length: 6 }).map((_, i) => (
           <Tr key={i}><Td><div className="flex items-center gap-2"><Sk className="w-7 h-7 rounded-full" /><Sk className="h-2.5 w-28" /></div></Td>
             {[1,2,3,4,5,6].map(j => <Td key={j}><Sk className="h-2.5 w-16" /></Td>)}</Tr>
-        )) : classes.length === 0 ? (
-          <tr><td colSpan={8}><EmptyState icon={GraduationCap} title="Chưa có lớp học" sub="Tạo lớp mới để bắt đầu" action={<button onClick={() => setModal({ type: 'create' })} className="px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-all">Tạo lớp</button>} /></td></tr>
-        ) : classes.map(c => (
-          <Tr key={c.id}>
+        )) : flatClassSubjects.length === 0 ? (
+          <tr><td colSpan={8}><EmptyState icon={GraduationCap} title="Chưa có lớp học" sub="Liên hệ quản trị viên để gán lớp" /></td></tr>
+        ) : flatClassSubjects.map(c => (
+          <Tr key={c.uniqueKey} onClick={() => navigate(c.subject ? `/lecturer/classes/${c.id}/subjects/${c.subject.id}` : `/lecturer/classes/${c.id}`, { state: { from: location.pathname } })}>
             <Td>
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-blue-500/10 border border-blue-400/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-[10px] font-bold text-blue-400">{c.name?.[0]?.toUpperCase()}</span>
                 </div>
                 <span
-                  onClick={() => { setModal({ type: 'edit', data: c }); setModalErr('') }}
                   className="text-xs font-medium dark:text-gray-200 text-gray-700 hover:text-blue-500 dark:hover:text-blue-400 hover:underline cursor-pointer transition-colors"
-                  title="Bấm để chỉnh sửa"
+                  title="Xem chi tiết lớp học"
                 >
-                  {c.name}
+                  {c.name} {c.subject ? `— ${c.subject.name}` : ''}
                 </span>
               </div>
             </Td>
-            <Td><span className="text-xs dark:text-gray-400 text-gray-500">{c.subject?.name ?? c.subjectName ?? '—'}</span></Td>
+            <Td><span className="text-xs dark:text-gray-400 text-gray-500">{c.subject ? `${c.subject.name} (${c.subject.code})` : '—'}</span></Td>
             <Td><span className="text-xs dark:text-gray-400 text-gray-500">{c.academicYear ?? '—'}</span></Td>
             <Td><span className="text-xs dark:text-gray-400 text-gray-500">{c.semester ?? '—'}</span></Td>
             <Td>
               <div className="flex items-center gap-1 text-xs dark:text-gray-400 text-gray-500">
                 <Users size={11} />
-                {c._count?.students ?? c.studentCount ?? 0}
+                {c.studentCount ?? 0}
               </div>
             </Td>
             <Td><Badge label={c.status} /></Td>
             <Td><span className="text-[10px] dark:text-gray-500 text-gray-400">{formatDate(c.createdAt)}</span></Td>
-            <Td>
+            <Td onClick={e => e.stopPropagation()}>
               <ActionMenu cls={c}
-                onEdit={c => { setModal({ type: 'edit', data: c }); setModalErr('') }}
-                onViewStudents={c => setModal({ type: 'students', data: c })}
+                onViewDetail={item => navigate(item.subject ? `/lecturer/classes/${item.id}/subjects/${item.subject.id}` : `/lecturer/classes/${item.id}`, { state: { from: location.pathname } })}
+                onEdit={item => { setModal({ type: 'edit', data: item }); setModalErr('') }}
+                onViewStudents={item => setModal({ type: 'students', data: item })}
                 onToggleStatus={handleToggleStatus}
               />
             </Td>

@@ -13,22 +13,6 @@ import { PageHeader, Sk } from '../components/LecturerUI'
 import { useTheme } from '../../../contexts/ThemeContext'
 import { formatRelative } from '../../../utils/formatDate'
 
-// Mock data — replace with API fields when backend returns them
-const MOCK_SUBMISSION_TREND = [
-  { week: 'T1', submitted: 8,  graded: 5  },
-  { week: 'T2', submitted: 15, graded: 12 },
-  { week: 'T3', submitted: 10, graded: 10 },
-  { week: 'T4', submitted: 22, graded: 18 },
-  { week: 'T5', submitted: 17, graded: 14 },
-  { week: 'T6', submitted: 25, graded: 20 },
-]
-
-const MOCK_STATUS_PIE = [
-  { name: 'Đã chấm',   value: 45, color: '#34D399' },
-  { name: 'Chờ chấm',  value: 18, color: '#3B9EE8' },
-  { name: 'Quá hạn',   value: 7,  color: '#FB7185' },
-]
-
 function ChartCard({ title, children }) {
   return (
     <div className="dark:bg-[#161B22]/60 bg-white border dark:border-[#21262D] border-blue-100/80 rounded-xl p-4">
@@ -83,7 +67,11 @@ export default function LecturerOverviewPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const s = data?.stats ?? {}
+  const s = data?.stats ?? data ?? {}
+  const trendData = data?.submissionTrend || []
+  const statusData = data?.submissionStatus || []
+  const hasStatusData = statusData.some(d => d.value > 0)
+  const hasTrendData = trendData.some(d => d.submitted > 0 || d.graded > 0)
 
   return (
     <div className="space-y-4 max-w-screen-2xl">
@@ -121,66 +109,86 @@ export default function LecturerOverviewPage() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-        <LecturerStatCard icon={GraduationCap} label="Lớp học"    value={loading ? null : (s.totalClasses    ?? 6)}  sub="đang phụ trách"  accent="blue"   loading={loading} />
-        <LecturerStatCard icon={BookOpen}      label="Môn học"    value={loading ? null : (s.totalSubjects   ?? 3)}  sub="được phân công"  accent="sky"    loading={loading} />
-        <LecturerStatCard icon={FileText}      label="Bài học"    value={loading ? null : (s.totalLessons    ?? 24)} sub="đã tạo"          accent="violet" loading={loading} />
-        <LecturerStatCard icon={ClipboardList} label="Bài tập"    value={loading ? null : (s.totalAssignments ?? 18)} sub="đã giao"        accent="orange" loading={loading} />
+        <LecturerStatCard icon={GraduationCap} label="Lớp học"    value={loading ? null : (s.totalClasses    ?? 0)}  sub="đang phụ trách"  accent="blue"   loading={loading} />
+        <LecturerStatCard icon={BookOpen}      label="Môn học"    value={loading ? null : (s.totalSubjects   ?? 0)}  sub="được phân công"  accent="sky"    loading={loading} />
+        <LecturerStatCard icon={FileText}      label="Bài học"    value={loading ? null : (s.totalLessons    ?? 0)} sub="đã tạo"          accent="violet" loading={loading} />
+        <LecturerStatCard icon={ClipboardList} label="Bài tập"    value={loading ? null : (s.totalAssignments ?? 0)} sub="đã giao"        accent="orange" loading={loading} />
       </div>
       <div className="grid grid-cols-2 xl:grid-cols-2 gap-3">
-        <LecturerStatCard icon={Inbox}         label="Chờ chấm"   value={loading ? null : (s.pendingSubmissions ?? 7)} sub="bài nộp"       accent="amber"  loading={loading} />
-        <LecturerStatCard icon={CheckCircle2}  label="Đã chấm"    value={loading ? null : (s.gradedSubmissions ?? 45)} sub="bài nộp"      accent="green"  loading={loading} />
+        <LecturerStatCard icon={Inbox}         label="Chờ chấm"   value={loading ? null : (s.pendingSubmissions ?? 0)} sub="bài nộp"       accent="amber"  loading={loading} />
+        <LecturerStatCard icon={CheckCircle2}  label="Đã chấm"    value={loading ? null : (s.gradedSubmissions ?? 0)} sub="bài nộp"      accent="green"  loading={loading} />
       </div>
 
       {/* Charts */}
       <div className="grid lg:grid-cols-3 gap-3">
         <ChartCard title="Xu hướng nộp & chấm bài (6 tuần)" >
-          <ResponsiveContainer width="100%" height={150}>
-            <AreaChart data={data?.submissionTrend ?? MOCK_SUBMISSION_TREND} margin={{ top:4, right:4, left:-28, bottom:0 }}>
-              <defs>
-                <linearGradient id="gSub" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#3B9EE8" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3B9EE8" stopOpacity={0.02} />
-                </linearGradient>
-                <linearGradient id="gGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#34D399" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#34D399" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={grid} />
-              <XAxis dataKey="week" tick={{ fontSize:10, fill:axis }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize:10, fill:axis }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip dark={dark} />} />
-              <Area type="monotone" dataKey="submitted" name="Nộp" stroke="#3B9EE8" strokeWidth={1.5} fill="url(#gSub)" dot={false} />
-              <Area type="monotone" dataKey="graded"    name="Chấm" stroke="#34D399" strokeWidth={1.5} fill="url(#gGrad)" dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
-          <div className="flex gap-4 mt-2">
-            {[{c:'#3B9EE8',l:'Nộp bài'},{c:'#34D399',l:'Đã chấm'}].map(x => (
-              <div key={x.l} className="flex items-center gap-1.5"><span className="w-3 h-0.5 rounded" style={{background:x.c}} /><span className="text-[10px] dark:text-gray-500 text-gray-400">{x.l}</span></div>
-            ))}
-          </div>
+          {loading ? (
+            <Sk className="h-[150px] w-full rounded-lg" />
+          ) : hasTrendData ? (
+            <ResponsiveContainer width="100%" height={150}>
+              <AreaChart data={trendData} margin={{ top:4, right:4, left:-28, bottom:0 }}>
+                <defs>
+                  <linearGradient id="gSub" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#3B9EE8" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3B9EE8" stopOpacity={0.02} />
+                  </linearGradient>
+                  <linearGradient id="gGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#34D399" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#34D399" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={grid} />
+                <XAxis dataKey="week" tick={{ fontSize:10, fill:axis }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize:10, fill:axis }} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip dark={dark} />} />
+                <Area type="monotone" dataKey="submitted" name="Nộp" stroke="#3B9EE8" strokeWidth={1.5} fill="url(#gSub)" dot={false} />
+                <Area type="monotone" dataKey="graded"    name="Chấm" stroke="#34D399" strokeWidth={1.5} fill="url(#gGrad)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[150px] flex items-center justify-center text-xs dark:text-gray-500 text-gray-400">
+              Không có dữ liệu xu hướng nộp bài
+            </div>
+          )}
+          {hasTrendData && (
+            <div className="flex gap-4 mt-2">
+              {[{c:'#3B9EE8',l:'Nộp bài'},{c:'#34D399',l:'Đã chấm'}].map(x => (
+                <div key={x.l} className="flex items-center gap-1.5"><span className="w-3 h-0.5 rounded" style={{background:x.c}} /><span className="text-[10px] dark:text-gray-500 text-gray-400">{x.l}</span></div>
+              ))}
+            </div>
+          )}
         </ChartCard>
 
         {/* Pie */}
         <ChartCard title="Trạng thái bài nộp">
-          <ResponsiveContainer width="100%" height={150}>
-            <PieChart>
-              <Pie data={data?.submissionStatus ?? MOCK_STATUS_PIE} cx="50%" cy="50%" innerRadius={38} outerRadius={58} paddingAngle={3} dataKey="value">
-                {(data?.submissionStatus ?? MOCK_STATUS_PIE).map((e, i) => (
-                  <Cell key={i} fill={e.color} stroke="transparent" />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip dark={dark} />} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex flex-col gap-1.5 mt-1">
-            {(data?.submissionStatus ?? MOCK_STATUS_PIE).map(r => (
-              <div key={r.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{background:r.color}} /><span className="text-[10px] dark:text-gray-400 text-gray-500">{r.name}</span></div>
-                <span className="text-[10px] font-bold dark:text-gray-300 text-gray-600">{r.value}</span>
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <Sk className="h-[150px] w-full rounded-lg" />
+          ) : hasStatusData ? (
+            <ResponsiveContainer width="100%" height={150}>
+              <PieChart>
+                <Pie data={statusData} cx="50%" cy="50%" innerRadius={38} outerRadius={58} paddingAngle={3} dataKey="value">
+                  {statusData.map((e, i) => (
+                    <Cell key={i} fill={e.color} stroke="transparent" />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip dark={dark} />} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[150px] flex items-center justify-center text-xs dark:text-gray-500 text-gray-400">
+              Không có dữ liệu trạng thái bài nộp
+            </div>
+          )}
+          {hasStatusData && (
+            <div className="flex flex-col gap-1.5 mt-1">
+              {statusData.map(r => (
+                <div key={r.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{background:r.color}} /><span className="text-[10px] dark:text-gray-400 text-gray-500">{r.name}</span></div>
+                  <span className="text-[10px] font-bold dark:text-gray-300 text-gray-600">{r.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </ChartCard>
 
         {/* Recent assignments */}

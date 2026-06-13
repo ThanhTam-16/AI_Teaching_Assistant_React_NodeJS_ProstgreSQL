@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { toast } from 'sonner'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import {
   Search, Inbox, Eye, Star, ChevronLeft, FileText,
-  Code2, Link2, CheckCircle2, AlertCircle, Send,
+  Code2, Link2, CheckCircle2, AlertCircle, Send, Sparkles
 } from 'lucide-react'
 import { getSubmissions, getSubmissionById } from '../../../services/submission.api'
 import { gradeSubmission } from '../../../services/grade.api'
@@ -20,6 +20,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 export function SubmissionManagementPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [submissions, setSubmissions] = useState([])
   const [classes, setClasses] = useState([])
   const [assignments, setAssignments] = useState([])
@@ -84,7 +85,10 @@ export function SubmissionManagementPage() {
         </select>
         <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1) }} className={selectCls}>
           <option value="">Tất cả trạng thái</option>
-          {['SUBMITTED','GRADED','LATE','PENDING'].map(s => <option key={s} value={s}>{s}</option>)}
+          <option value="SUBMITTED">Đã nộp</option>
+          <option value="GRADED">Đã chấm</option>
+          <option value="LATE">Nộp muộn</option>
+          <option value="PENDING">Chờ xử lý</option>
         </select>
       </div>
 
@@ -94,14 +98,14 @@ export function SubmissionManagementPage() {
         )) : submissions.length === 0 ? (
           <tr><td colSpan={8}><EmptyState icon={Inbox} title="Chưa có bài nộp" sub="Bài nộp sẽ xuất hiện khi sinh viên nộp bài" /></td></tr>
         ) : submissions.map(s => (
-          <Tr key={s.id}>
+          <Tr key={s.id} onClick={() => navigate(`/lecturer/grading/${s.id}`, { state: { from: location.pathname } })}>
             <Td>
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-blue-500/10 border border-blue-400/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-[10px] font-bold text-blue-400">{s.student?.name?.[0]?.toUpperCase() ?? 'S'}</span>
+                  <span className="text-[10px] font-bold text-blue-400">{s.student?.fullName?.[0]?.toUpperCase() ?? 'S'}</span>
                 </div>
                 <div>
-                  <div className="text-xs font-medium dark:text-gray-200 text-gray-700">{s.student?.name ?? '—'}</div>
+                  <div className="text-xs font-medium dark:text-gray-200 text-gray-700">{s.student?.fullName ?? '—'}</div>
                   <div className="text-[10px] dark:text-gray-500 text-gray-400">{s.student?.email}</div>
                 </div>
               </div>
@@ -120,8 +124,8 @@ export function SubmissionManagementPage() {
               ) : <span className="text-[10px] dark:text-gray-600 text-gray-300">—</span>}
             </Td>
             <Td><Badge label={s.status} /></Td>
-            <Td>
-              <button onClick={() => navigate(`/lecturer/grading/${s.id}`)}
+            <Td onClick={e => e.stopPropagation()}>
+              <button onClick={() => navigate(`/lecturer/grading/${s.id}`, { state: { from: location.pathname } })}
                 className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-400/20 rounded-lg hover:bg-blue-500/20 transition-all">
                 <Star size={10} />{s.status === 'GRADED' ? 'Xem' : 'Chấm'}
               </button>
@@ -140,6 +144,16 @@ export function SubmissionManagementPage() {
 export function GradingPage() {
   const { submissionId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  
+  const handleBack = () => {
+    if (location.state?.from) {
+      navigate(location.state.from)
+    } else {
+      navigate('/lecturer/submissions')
+    }
+  }
+
   const [submission, setSubmission] = useState(null)
   const [feedbacks, setFeedbacks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -218,10 +232,16 @@ export function GradingPage() {
         title="Chấm điểm bài nộp"
         description={s.assignment?.title ?? ''}
         actions={
-          <button onClick={() => navigate('/lecturer/submissions')}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs dark:text-gray-400 text-gray-500 border dark:border-[#21262D] border-gray-200 rounded-lg dark:hover:bg-[#21262D] hover:bg-gray-50 transition-all">
-            <ChevronLeft size={13} /> Quay lại
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => navigate(`/lecturer/ai/feedback?submissionId=${submissionId}`, { state: { from: location.pathname } })}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gradient-to-r from-blue-500 to-sky-500 text-white font-bold rounded-lg hover:from-blue-600 hover:to-sky-600 transition-all shadow-sm">
+              <Sparkles size={12} /> AI Feedback
+            </button>
+            <button onClick={handleBack}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs dark:text-gray-400 text-gray-500 border dark:border-[#21262D] border-gray-200 rounded-lg dark:hover:bg-[#21262D] hover:bg-gray-50 transition-all">
+              <ChevronLeft size={13} /> Quay lại
+            </button>
+          </div>
         }
       />
 
@@ -230,10 +250,10 @@ export function GradingPage() {
         <h3 className="text-xs font-bold dark:text-gray-300 text-gray-700 mb-3">Thông tin sinh viên</h3>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-blue-500/10 border border-blue-400/20 flex items-center justify-center">
-            <span className="text-sm font-bold text-blue-400">{s.student?.name?.[0]?.toUpperCase() ?? 'S'}</span>
+            <span className="text-sm font-bold text-blue-400">{s.student?.fullName?.[0]?.toUpperCase() ?? 'S'}</span>
           </div>
           <div>
-            <div className="text-sm font-bold dark:text-gray-200 text-gray-800">{s.student?.name ?? '—'}</div>
+            <div className="text-sm font-bold dark:text-gray-200 text-gray-800">{s.student?.fullName ?? '—'}</div>
             <div className="text-xs dark:text-gray-500 text-gray-400">{s.student?.email}</div>
           </div>
           <div className="ml-auto flex items-center gap-2">
@@ -267,17 +287,17 @@ export function GradingPage() {
           </a>
         )}
 
-        {s.code && (
+        {s.codeText && (
           <div className="dark:bg-[#0D1117] bg-gray-900 border dark:border-[#21262D] border-gray-800 rounded-lg p-3">
             <div className="flex items-center gap-1.5 mb-2">
               <Code2 size={11} className="text-blue-400" />
               <span className="text-[10px] font-semibold text-blue-400">Source Code</span>
             </div>
-            <pre className="text-[11px] text-gray-300 overflow-x-auto whitespace-pre-wrap">{s.code}</pre>
+            <pre className="text-[11px] text-gray-300 overflow-x-auto whitespace-pre-wrap">{s.codeText}</pre>
           </div>
         )}
 
-        {!s.content && !s.fileUrl && !s.githubUrl && !s.code && (
+        {!s.content && !s.fileUrl && !s.githubUrl && !s.codeText && (
           <p className="text-xs dark:text-gray-600 text-gray-400 text-center py-4">Không có nội dung bài nộp.</p>
         )}
       </div>
